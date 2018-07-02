@@ -115,9 +115,11 @@ def get_map(location: Location, zoom: str, width: str, height: str) -> None:
     """
     with open('./mapbox.key', 'r') as key_f:
         access_token = key_f.read()
+    marker = f'pin-l-waste-basket({location.lng},{location.lat})'
     map_uri = 'https://api.mapbox.com/styles/v1/mapbox/streets-v10/static/' \
-    f'{location.lng},{location.lat},{zoom},0,0/{width}x{height}?' \
+    f'{marker}/{location.lng},{location.lat},{zoom},0,0/{width}x{height}@2x?' \
     f'access_token={access_token}'
+    print(map_uri)
     # Download image to file
     req = requests.get(map_uri)
     if req.status_code == 200:
@@ -133,6 +135,8 @@ if __name__ == '__main__':
         uprn = get_uprn_from_input()
         location = get_location_from_uprn(connection, uprn)
         location.print_location()
+        get_map(location, 11, 600, 600)
         get_map(location, 14, 600, 600)
+        get_map(location, 17, 600, 600)
     except (pyodbc.DatabaseError, pyodbc.InterfaceError, ValueError) as error:
         print(error)

@@ -4,8 +4,6 @@ Downloads a series of static map images from Mapbox of a UPRN's surrounding area
 
 `py -3 street_maps.py [UPRN]` OR `py -3 street_maps.py` and be prompted for UPRN at the start
 
-### TODO
+## TODO
 
-Figure out how to use the overlay and markers.
-Probably useful:
-https://www.mapbox.com/api-documentation/?language=Python#retrieve-a-static-map-from-a-style
+Use Pillow (or maybe something else) to lay the images out on a page with address details and convert that image to a single PDF
