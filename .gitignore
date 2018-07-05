@@ -1,3 +1,5 @@
 mapbox.key
 .config
 help.json
+__pycache__
+cacert.pem

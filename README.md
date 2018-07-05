@@ -1,8 +1,8 @@
 ## Map Download UPRN
 
-Downloads a series of static map images from ArcGIS of a UPRN's surrounding area at different elevation levels
+Downloads a series of static map images from Esri/Mapbox of a UPRN's surrounding area at different elevation levels
 
-`py -3 street_maps.py [UPRN]` OR `py -3 street_maps.py` and be prompted for UPRN at the start
+`py -3 main.py [UPRN] [MAP TYPE]` OR `py -3 main.py` and be prompted for the arguments at the start
 
 ## TODO
 

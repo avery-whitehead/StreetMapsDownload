@@ -34,7 +34,7 @@
 		"visibleLayers": [0, 12, 14, 15]
 	}],
 	"exportOptions": {
-		"outputSize": [3840, 2160],
+		"outputSize": ["x_size", "y_size"],
 		"dpi": 300
 	},
 	"layoutOptions": {
