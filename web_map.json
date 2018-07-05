@@ -1,0 +1,47 @@
+{
+	"mapOptions": {
+		"showAttribution": false,
+		"extent": {
+			"xmin": "<x>",
+			"ymin": "<y>",
+			"xmax": "<x>",
+			"ymax": "<y>",
+			"spatialReference": {
+				"wkid": 27700,
+				"latestWkid": 27700
+			}
+		},
+		"scale": "<scale>",
+		"spatialReference": {
+			"wkid": 27700,
+			"latestWkid": 27700
+		}
+	},
+	"operationalLayers": [{
+		"id": "defaultBasemap",
+		"title": "BaseMap2",
+		"opacity": 1,
+		"minScale": 250000,
+		"maxScale": 1000,
+		"url": "https://ccvgisapp01:6443/arcgis/rest/services/BaseMaps/BaseMap2/MapServer"
+	}, {
+		"id": "Default1_5042",
+		"title": "Basic Layers",
+		"opacity": 1,
+		"minScale": 0,
+		"maxScale": 0,
+		"url": "https://ccvgisapp01:6443/arcgis/rest/services/Portal/Default1/MapServer",
+		"visibleLayers": [0, 12, 14, 15]
+	}],
+	"exportOptions": {
+		"outputSize": [3840, 2160],
+		"dpi": 300
+	},
+	"layoutOptions": {
+		"titleText": "Basic Web Map",
+		"scaleBarOptions": {},
+		"legendOptions": {
+			"operationalLayers": []
+		}
+    }
+}

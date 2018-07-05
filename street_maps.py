@@ -6,7 +6,7 @@ From the command line, run `py -3 resolve_uprn.py [uprn]`, or leave the
 UPRN field blank and be prompted at the command line
 How it works:
 Given a UPRN as input, uses it to resolve latitude, longitude and
-address. Uses these values to create a static MapBox image
+address. Uses these values to create a static ArcGIS image
 """
 
 import json
@@ -18,16 +18,16 @@ class Location:
     """
     Represents a geographical location associated with a UPRN
     """
-    def __init__(self, lat: str, lng: str, address: str, uprn: str):
+    def __init__(self, x: str, y: str, address: str, uprn: str):
         """
         Args:
-            lat (str): The latitude of this location
-            lng (str): The longitude of this location
+            x (str): The x-coordinate of this location
+            y (str): The y-coordinate of this location
             address (str): The address of this location
             uprn (str): The UPRN of this location
         """
-        self.lat = lat
-        self.lng = lng
+        self.x = x
+        self.y = y
         self.address = address
         self.uprn = uprn
 
@@ -101,31 +101,55 @@ def get_location_from_uprn(conn: pyodbc.Connection, uprn: str) -> Location:
     cursor = conn.cursor()
     cursor.execute(loc_query, uprn)
     loc = cursor.fetchone()
-    return Location(loc.lat, loc.lng, loc.address, uprn)
+    return Location(str(loc.x), str(loc.y), loc.addr, uprn)
 
-def get_map(location: Location, zoom: str, width: str, height: str) -> None:
+def get_map(location: Location, scale: str) -> None:
     """
-    Uses the Requests library and the Mapbox API to download a static map
+    Uses the Requests library and the ArcGIS to download a static map
     image of the location
     Args:
         location (Location): The location to get a map for
-        zoom (str): The zoom level of the map (minimum 0, maximum 20)
-        width (str): The width of the image (px)
-        height (str): The height of the image (px)
-    """
-    with open('./mapbox.key', 'r') as key_f:
-        access_token = key_f.read()
-    marker = f'pin-l-waste-basket({location.lng},{location.lat})'
-    map_uri = 'https://api.mapbox.com/styles/v1/mapbox/streets-v10/static/' \
-    f'{marker}/{location.lng},{location.lat},{zoom},0,0/{width}x{height}@2x?' \
-    f'access_token={access_token}'
-    print(map_uri)
-    # Download image to file
-    req = requests.get(map_uri)
-    if req.status_code == 200:
-        with open(f'./img/{location.uprn}-{zoom}.png', 'wb') as image_f:
-            image_f.write(req.content)
 
+    """
+    map_uri = 'https://ccvgisapp01:6443/arcgis/rest/services/Printing/' \
+        'HDCExportWebMap/GPServer/Export Web Map/execute'
+    headers = {'Content-Type': 'application/x-www-form-urlencoded'}
+    web_map_as_json = get_web_map_as_json(location.x, location.y, scale)
+    payload = {
+        'Web_Map_as_JSON': web_map_as_json,
+        'Format': 'PNG32',
+        'f': 'json',
+        'Layout_Template': 'MAP_ONLY'}
+    cafile = 'C:\\Program Files\\Python36\\Lib\\site-packages\\' \
+        'certifi\\cacert.pem'
+    req = requests.post(map_uri, headers=headers, data=payload, verify=cafile)
+    if req.status_code == 200:
+        # Returns a JSON formatted bytes type
+        resp = req.content.decode('utf8')
+        json_resp = json.loads(resp)
+        img_url = json_resp['results'][0]['value']['url']
+        img_req = requests.get(img_url)
+        with open(f'./img/{location.uprn}-{scale}.png', 'wb') as image_f:
+            image_f.write(img_req.content)
+
+def get_web_map_as_json(x: str, y: str, scale: str) -> str:
+    """
+    Loads the JSON template from file, fills in the x and y values and
+    removes the whitespace so it can be passed as a parameter to the ArcGIS API
+    Args:
+        x (str): The x-coordinate of the location
+        y (str): The y-coordinate of the location
+    Returns:
+        string: The filled in, formatted JSON template as a string
+    """
+    with open('.\\web_map.json', 'r') as web_map_f:
+        web_map = json.load(web_map_f)
+    web_map['mapOptions']['extent']['xmin'] = x
+    web_map['mapOptions']['extent']['xmax'] = x
+    web_map['mapOptions']['extent']['ymin'] = y
+    web_map['mapOptions']['extent']['ymax'] = y
+    web_map['mapOptions']['scale'] = scale
+    return str(web_map)
 
 if __name__ == '__main__':
     try:
@@ -135,8 +159,8 @@ if __name__ == '__main__':
         uprn = get_uprn_from_input()
         location = get_location_from_uprn(connection, uprn)
         location.print_location()
-        get_map(location, 11, 600, 600)
-        get_map(location, 14, 600, 600)
-        get_map(location, 17, 600, 600)
-    except (pyodbc.DatabaseError, pyodbc.InterfaceError, ValueError) as error:
+        get_map(location, 1500)
+        get_map(location, 10000)
+        get_map(location, 25000)
+    except (pyodbc.DatabaseError, pyodbc.InterfaceError) as error:
         print(error)
