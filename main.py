@@ -1,10 +1,13 @@
 """
 main.py
+Uses the classes and functions in getmaps.py and createprints.py to
+get and layout three different elevations of maps on a page
 TODO:
 createprints.py
 """
 
 import getmaps
+import createprints
 import pyodbc
 
 if __name__ == '__main__':
@@ -15,14 +18,24 @@ if __name__ == '__main__':
         (uprn, map_type) = getmaps.get_input()
         location = getmaps.get_location_from_uprn(connection, uprn)
         location.print_location()
+        # Get the maps
         if map_type == 'Esri':
-            getmaps.get_arcgis_map(location, 1500, 4663, 3210)
-            getmaps.get_arcgis_map(location, 10000, 2225, 3358)
-            getmaps.get_arcgis_map(location, 25000, 2225, 3358)
+            # Most zoomed in to least zoomed in
+            scales = [1500, 10000, 25000]
+            maps = [
+                getmaps.get_arcgis_map(location, scales[0], 4663, 3210),
+                getmaps.get_arcgis_map(location, scales[1], 2225, 3358),
+                getmaps.get_arcgis_map(location, scales[2], 2225, 3358)]
         if map_type == 'Mapbox':
+            # Most zoomed in to least zoomed in
+            scales = [17, 13, 12]
             #Mapbox API sizes are limited to 1028x1028
-            getmaps.get_mapbox_map(location, 17, 1020, 702)
-            getmaps.get_mapbox_map(location, 14, 487, 735)
-            getmaps.get_mapbox_map(location, 11, 487, 735)
+            maps = [
+                getmaps.get_mapbox_map(location, scales[0], 1020, 702),
+                getmaps.get_mapbox_map(location, scales[1], 487, 735),
+                getmaps.get_mapbox_map(location, scales[2], 487, 735)]
+        # Print the maps
+        createprints.open_template(map_type)
+        map_images = createprints.open_maps(uprn, map_type, scales)
     except (pyodbc.DatabaseError, pyodbc.InterfaceError, ValueError) as error:
         print(error)

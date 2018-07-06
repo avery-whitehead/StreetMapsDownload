@@ -1,7 +1,7 @@
 """
-arc_gis.py
-A Location class and a series of functions used to perform a
-request to the ArcGIS REST API to return a static map image
+getmaps.py
+A custom Location class and a series of functions used to perform a request to
+either the ArcGIS or Mapbox REST APIs to return a static map image
 """
 
 from typing import Tuple
@@ -69,16 +69,16 @@ def database_connect(config_path: str) -> pyodbc.Connection:
         uid=config['uid'],
         pwd=config['pwd'])
 
-def get_input() -> Tuple[str]:
+def get_input() -> Tuple[str, str]:
     """
     Gets the UPRN and map type as a command line argument, or prompts the
     user for input if no command line argument exists
     Returns:
-        Tuple[str]: The UPRN and the map type chosen by the user
+        Tuple[str, str]: The UPRN and the map type chosen by the user
     """
     # If there are too many arguments
     if len(sys.argv) != 3:
-        raise ValueError(f'{len(sys.argv) -1} arguments found (2 expected)')
+        print(f'{len(sys.argv) -1} arguments found (2 expected)')
     # If there is two extra argument found, check validity
     if len(sys.argv) == 3:
         uprn = sys.argv[1]
@@ -149,12 +149,11 @@ def get_mapbox_map(
     map_uri = 'https://api.mapbox.com/styles/v1/mapbox/streets-v10/static/' \
     f'{location.lng},{location.lat},{zoom},0,0/{x_size}x{y_size}@2x?' \
     f'access_token={access_token}'
-    print(map_uri)
     # Download image to file
     req = requests.get(map_uri)
-    print(req.status_code)
     if req.status_code == 200:
-        with open(f'./img/mbox-{location.uprn}-{zoom}.png', 'wb') as image_f:
+        img_path = f'./img/mapbox-{location.uprn}-{zoom}.png'
+        with open(img_path, 'wb') as image_f:
             image_f.write(req.content)
 
 def get_arcgis_map(
@@ -186,10 +185,10 @@ def get_arcgis_map(
     if req.status_code == 200:
         # Returns a JSON formatted bytes type
         resp = req.content.decode('utf8')
-        json_resp = json.loads(resp)
-        img_url = json_resp['results'][0]['value']['url']
+        img_url = json.loads(resp)['results'][0]['value']['url']
         img_req = requests.get(img_url)
-        with open(f'./img/esri-{location.uprn}-{scale}.png', 'wb') as image_f:
+        img_path = f'./img/esri-{location.uprn}-{scale}.png'
+        with open(img_path, 'wb') as image_f:
             image_f.write(img_req.content)
 
 def __get_json(x: str, y: str, scale: str, x_size: int, y_size: int) -> str:
