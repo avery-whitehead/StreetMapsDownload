@@ -26,7 +26,7 @@ if __name__ == '__main__':
                 getmaps.get_arcgis_map(location, scales[2], 2225, 3358)]
         if map_type == 'Mapbox':
             # Most zoomed in to least zoomed in
-            scales = [17, 13, 12]
+            scales = [17, 14, 11]
             #Mapbox API sizes are limited to 1028x1028
             maps = [
                 getmaps.get_mapbox_map(location, scales[0], 1020, 702),
@@ -36,7 +36,7 @@ if __name__ == '__main__':
         template = createprints.open_template(map_type)
         map_images = createprints.open_maps(uprn, map_type, scales)
         print_map = createprints.paste_maps(map_type, template, map_images)
-        result = createprints.save_print(uprn, map_type, print_map, 'jpeg')
+        result = createprints.save_print(uprn, map_type, print_map, 'pdf')
         print(result)
     except (pyodbc.DatabaseError, pyodbc.InterfaceError, ValueError) as error:
         print(error)
