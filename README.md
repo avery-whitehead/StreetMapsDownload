@@ -4,6 +4,12 @@ Downloads a series of static map images from Esri/Mapbox of a UPRN's surrounding
 
 `py -3 main.py [UPRN] [MAP TYPE]` OR `py -3 main.py` and be prompted for the arguments at the start
 
-## TODO
+## Examples
 
-Use Pillow (or maybe something else) to lay the images out on a page with address details and convert that image to a single PDF
+Mapbox-style map:
+
+![Mapbox-style map](https://i.imgur.com/rCsgdDp.jpg)
+
+Esri-style map:
+
+![Esri-style map](https://i.imgur.com/NdQwv7X.jpg)

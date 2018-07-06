@@ -17,9 +17,9 @@ def open_template(map_type: str) -> Image:
         Image: The imported template file
     """
     if map_type == 'Esri':
-        template = Image.open('.\\img\\template.png')
+        template = Image.open('.\\img\\template.jpg')
     if map_type == 'Mapbox':
-        template = Image.open('.\\img\\template_small.png')
+        template = Image.open('.\\img\\template_small.jpg')
     return template
 
 def open_maps(uprn: str, map_type: str, scales: List[int]) -> List['Image']:
@@ -35,10 +35,11 @@ def open_maps(uprn: str, map_type: str, scales: List[int]) -> List['Image']:
     Returns:
         List[Image]: A list of three Images containing the loaded maps
     """
+    partial_path = f'.\\img\\{map_type.lower()}-{uprn}'
     return [
-        Image.open(f'.\\img\\{map_type.lower()}-{uprn}-{str(scales[0])}.png'),
-        Image.open(f'.\\img\\{map_type.lower()}-{uprn}-{str(scales[1])}.png'),
-        Image.open(f'.\\img\\{map_type.lower()}-{uprn}-{str(scales[2])}.png')]
+        Image.open(f'{partial_path}-{str(scales[0])}.jpg').convert('RGB'),
+        Image.open(f'{partial_path}-{str(scales[1])}.jpg').convert('RGB'),
+        Image.open(f'{partial_path}-{str(scales[2])}.jpg').convert('RGB')]
 
 def paste_maps(map_type: str, template: Image, maps: List['Image']) -> Image:
     """
@@ -47,5 +48,29 @@ def paste_maps(map_type: str, template: Image, maps: List['Image']) -> Image:
         map_type (str): Either 'Mapbox' or 'Esri'. Each map type has a
         diferent template, so a different location of the maps on the page
         template (Image): The base template image
+    Returns:
+        Image: The template image with the map images pasted on
     """
-    pass
+    if map_type == 'Esri':
+        template.paste(maps[0], (148, 149))
+        template.paste(maps[1], (148, 3508))
+        template.paste(maps[2], (2586, 3508))
+    if map_type == 'Mapbox':
+        template.paste(maps[0], (63, 64))
+        template.paste(maps[1], (63, 1532))
+        template.paste(maps[2], (1129, 1532))
+    return template
+
+def save_print(uprn: str, map_type: str, print_map: Image, ext: str) -> str:
+    """
+    Saves the print of all the maps in the template to file
+    Args:
+        uprn (str): The UPRN of the location depicted in the map
+        map_type (str): Either 'Mapbox' or 'Esri'
+        print_map (Image): The image of the map to save to file
+        ext (str): The file extension/format to save as (PDF or JPEG)
+    """
+    save_path = f'.\\img\\{map_type.lower()}-{uprn}.{ext}'
+    print_map.save(save_path, format=ext, resolution=300)
+    return f'Saved image: {save_path}'
+

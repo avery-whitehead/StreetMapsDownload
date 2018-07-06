@@ -2,8 +2,6 @@
 main.py
 Uses the classes and functions in getmaps.py and createprints.py to
 get and layout three different elevations of maps on a page
-TODO:
-createprints.py
 """
 
 import getmaps
@@ -35,7 +33,10 @@ if __name__ == '__main__':
                 getmaps.get_mapbox_map(location, scales[1], 487, 735),
                 getmaps.get_mapbox_map(location, scales[2], 487, 735)]
         # Print the maps
-        createprints.open_template(map_type)
+        template = createprints.open_template(map_type)
         map_images = createprints.open_maps(uprn, map_type, scales)
+        print_map = createprints.paste_maps(map_type, template, map_images)
+        result = createprints.save_print(uprn, map_type, print_map, 'jpeg')
+        print(result)
     except (pyodbc.DatabaseError, pyodbc.InterfaceError, ValueError) as error:
         print(error)

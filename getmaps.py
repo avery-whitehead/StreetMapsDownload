@@ -152,7 +152,7 @@ def get_mapbox_map(
     # Download image to file
     req = requests.get(map_uri)
     if req.status_code == 200:
-        img_path = f'./img/mapbox-{location.uprn}-{zoom}.png'
+        img_path = f'./img/mapbox-{location.uprn}-{zoom}.jpg'
         with open(img_path, 'wb') as image_f:
             image_f.write(req.content)
 
@@ -177,7 +177,7 @@ def get_arcgis_map(
     web_map = __get_json(location.x, location.y, scale, x_size, y_size)
     payload = {
         'Web_Map_as_JSON': web_map,
-        'Format': 'PNG32',
+        'Format': 'JPG',
         'f': 'json',
         'Layout_Template': 'MAP_ONLY'}
     cafile = '.\\cacert.pem'
@@ -187,7 +187,7 @@ def get_arcgis_map(
         resp = req.content.decode('utf8')
         img_url = json.loads(resp)['results'][0]['value']['url']
         img_req = requests.get(img_url)
-        img_path = f'./img/esri-{location.uprn}-{scale}.png'
+        img_path = f'./img/esri-{location.uprn}-{scale}.jpg'
         with open(img_path, 'wb') as image_f:
             image_f.write(img_req.content)
 
