@@ -86,6 +86,51 @@ def paste_maps(map_type: str, template: Image, maps: List['Image']) -> Image:
         template.paste(maps[1], (60, 1729))
     return template
 
+def draw_circle_on_template(map_type: str, print_map: Image):
+    """
+    Draws a circle over the centre of the maps (so needs to be called atfer
+    paste_maps)
+    Args:
+        map_type (str): Either 'Mapbox' or 'Esri', used to determine the
+        location of the bounding box
+        print_map (Image): The base template Image with the maps already
+        pasted on
+    """
+    if map_type == 'Esri':
+        top_mask = __draw_ellipse(print_map, [2397, 2360, 2490, 2452], 10, 4)
+        bot_mask = __draw_ellipse(print_map, [2397, 5496, 2490, 5588], 10, 4)
+    print_map.paste('black', mask=top_mask)
+    print_map.paste('black', mask=bot_mask)
+    return print_map
+
+def __draw_ellipse(
+        img: Image,
+        bounds: List[int],
+        width: int,
+        antialias: int) -> Image:
+    """
+    Helper function for drawing ellipses with a specified thickness.
+    Credit to https://stackoverflow.com/a/34926008
+    Args:
+        img (Image): The image to paste the ellipse on
+        bounds List[int]: The bounding box the circle occupies. Takes the
+        format [top left x, top left y, bottom right x, bottom right y]
+        width: The width of the ellipse line (px)
+        antialiasing: The level of antialising to apply to the line
+    """
+    # Use a single channel image (mode='L') as mask
+    mask = Image.new(
+        size=[int(dim * antialias) for dim in img.size],
+        mode='L', color='black')
+    draw = ImageDraw.Draw(mask)
+    # Draw outer shape in outline colour and inner shape in black/transparent
+    for offset, fill in (width / -2.0, 'white'), (width / 2.0, 'black'):
+        left, top = [(value + offset) * antialias for value in bounds[:2]]
+        right, bottom = [(value - offset) * antialias for value in bounds[2:]]
+        draw.ellipse([left, top, right, bottom], fill=fill)
+    # Downsample the mask using PIL.Image.LANCZOS
+    return mask.resize(img.size, Image.LANCZOS)
+
 def save_print(uprn: str, map_type: str, print_map: Image, ext: str) -> str:
     """
     Saves the print of all the maps in the template to file

@@ -35,7 +35,7 @@
 	}],
 	"exportOptions": {
 		"outputSize": ["x_size", "y_size"],
-		"dpi": 300
+		"dpi": 600
 	},
 	"layoutOptions": {
 		"titleText": "Basic Web Map",

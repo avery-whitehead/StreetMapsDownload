@@ -20,7 +20,7 @@ if __name__ == '__main__':
         template = createprints.open_template(map_type)
         if map_type == 'Esri':
             # Most zoomed in to least zoomed in
-            scales = [1500, 10000]
+            scales = [1000, 10000]
             maps = [
                 getmaps.get_arcgis_map(location, scales[0], 4663, 3502),
                 getmaps.get_arcgis_map(location, scales[1], 4663, 2649)]
@@ -38,7 +38,8 @@ if __name__ == '__main__':
         # Create and print the maps
         map_images = createprints.open_maps(uprn, map_type, scales)
         print_map = createprints.paste_maps(map_type, template, map_images)
-        result = createprints.save_print(uprn, map_type, print_map, 'pdf')
+        final_maps = createprints.draw_circle_on_template(map_type, print_map)
+        result = createprints.save_print(uprn, map_type, final_maps, 'pdf')
         print(result)
     except (pyodbc.DatabaseError, pyodbc.InterfaceError, ValueError) as error:
         print(error)
