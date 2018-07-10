@@ -97,8 +97,12 @@ def draw_circle_on_template(map_type: str, print_map: Image):
         pasted on
     """
     if map_type == 'Esri':
+        # [top left x, top left y, bottom right x, bottom right y]
         top_mask = __draw_ellipse(print_map, [2334, 2321, 2521, 2508], 12, 4)
         bot_mask = __draw_ellipse(print_map, [2236, 5311, 2686, 5761], 20, 4)
+    if map_type == 'Mapbox':
+        top_mask = __draw_ellipse(print_map, [954, 942, 1044, 1032], 6, 4)
+        bot_mask = __draw_ellipse(print_map, [938, 2183, 1111, 2356], 10, 4)
     print_map.paste('black', mask=top_mask)
     print_map.paste('black', mask=bot_mask)
     return print_map

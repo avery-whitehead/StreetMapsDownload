@@ -6,10 +6,10 @@ Downloads a series of static map images from Esri/Mapbox of a UPRN's surrounding
 
 ## Examples
 
-Mapbox-style map:
-
-![Mapbox-style map](https://i.imgur.com/rCsgdDp.jpg)
-
 Esri-style map:
 
-![Esri-style map](https://i.imgur.com/NdQwv7X.jpg)
+![Esri-style map](https://i.imgur.com/A0roYo6.jpg)
+
+Mapbox-style map:
+
+![Mapbox-style map](https://i.imgur.com/VaNuXfU.jpg)
