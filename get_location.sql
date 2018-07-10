@@ -5,7 +5,7 @@ SELECT
     ll.LLPG_LatLng_Lng AS lng,
     xy.ADDRESS_STR AS addr
 FROM
-    WaSSCollections.dbo.LLPG_ADDRESS_CURRENT_SPATIAL xy
+    WaSSCollections.dbo.MV_HDC_LLPG_ADDRESSES_CURRENT xy
 INNER JOIN
     WaSSCollections.dbo.LLPG_LatLng AS ll
 ON xy.UPRN = ll.LLPG_LatLng_UPRN

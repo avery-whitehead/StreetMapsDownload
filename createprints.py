@@ -97,8 +97,8 @@ def draw_circle_on_template(map_type: str, print_map: Image):
         pasted on
     """
     if map_type == 'Esri':
-        top_mask = __draw_ellipse(print_map, [2397, 2360, 2490, 2452], 10, 4)
-        bot_mask = __draw_ellipse(print_map, [2397, 5496, 2490, 5588], 10, 4)
+        top_mask = __draw_ellipse(print_map, [2334, 2321, 2521, 2508], 12, 4)
+        bot_mask = __draw_ellipse(print_map, [2236, 5311, 2686, 5761], 20, 4)
     print_map.paste('black', mask=top_mask)
     print_map.paste('black', mask=bot_mask)
     return print_map

@@ -22,8 +22,8 @@ if __name__ == '__main__':
             # Most zoomed in to least zoomed in
             scales = [1000, 10000]
             maps = [
-                getmaps.get_arcgis_map(location, scales[0], 4663, 3502),
-                getmaps.get_arcgis_map(location, scales[1], 4663, 2649)]
+                getmaps.get_arcgis_map(location, scales[0], 4663, 3502, 600),
+                getmaps.get_arcgis_map(location, scales[1], 4663, 2649, 1200)]
             template = createprints.write_text_on_template(
                 location.address, uprn, map_type, template)
         if map_type == 'Mapbox':

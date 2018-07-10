@@ -160,7 +160,8 @@ def get_arcgis_map(
         location: Location,
         scale: str,
         x_size: int,
-        y_size: int) -> None:
+        y_size: int,
+        dpi: int) -> None:
     """
     Uses the Requests library and the ArcGIS to download a static map
     image of the location
@@ -170,11 +171,12 @@ def get_arcgis_map(
         zoomed out)
         x_size (int): The width of the output image (px)
         y_size (int): The height of the output image (px)
+        dpi (int): The DPI of the output image (default is 96)
     """
     map_uri = 'https://ccvgisapp01:6443/arcgis/rest/services/Printing/' \
         'HDCExportWebMap/GPServer/Export Web Map/execute'
     headers = {'Content-Type': 'application/x-www-form-urlencoded'}
-    web_map = __get_json(location.x, location.y, scale, x_size, y_size)
+    web_map = __get_json(location.x, location.y, scale, x_size, y_size, dpi)
     payload = {
         'Web_Map_as_JSON': web_map,
         'Format': 'JPG',
@@ -191,7 +193,13 @@ def get_arcgis_map(
         with open(img_path, 'wb') as image_f:
             image_f.write(img_req.content)
 
-def __get_json(x: str, y: str, scale: str, x_size: int, y_size: int) -> str:
+def __get_json(
+        x: str,
+        y: str,
+        scale: str,
+        x_size: int,
+        y_size: int,
+        dpi: int) -> str:
     """
     Loads the JSON template from file, fills in the x and y values and
     removes the whitespace so it can be passed as a parameter to the ArcGIS API
@@ -202,6 +210,7 @@ def __get_json(x: str, y: str, scale: str, x_size: int, y_size: int) -> str:
         zoomed out)
         x_size (int): The width of the output image (px)
         y_size (int): The height of the output image (px)
+        dpi (int): The DPI of the output image (default is 96)
     Returns:
         string: The filled in and formatted JSON template as a string
     """
@@ -213,4 +222,5 @@ def __get_json(x: str, y: str, scale: str, x_size: int, y_size: int) -> str:
     web_map['mapOptions']['extent']['ymax'] = y
     web_map['mapOptions']['scale'] = scale
     web_map['exportOptions']['outputSize'] = [x_size, y_size]
+    web_map['exportOptions']['dpi'] = dpi
     return str(web_map)
