@@ -89,9 +89,3 @@ def plot_db_clusters(X: np.ndarray, db: DBSCAN) -> None:
     n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
     plt.title(f'Estimated number of clusters: {n_clusters_}')
     plt.show()
-
-
-# X = load_csv_data('.\\lat_longs.csv')
-# db = get_db_object(X, 0.0125, 3)
-# clusters = get_db_clusters(X, db)
-# plot_db_clusters(X, db)
