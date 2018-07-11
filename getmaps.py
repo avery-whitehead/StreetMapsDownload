@@ -4,11 +4,11 @@ A custom Location class and a series of functions used to perform a request to
 either the ArcGIS or Mapbox REST APIs to return a static map image
 """
 
-from typing import Tuple
 import json
 import sys
 import requests
 import pyodbc
+
 
 class Location:
     """
@@ -60,7 +60,7 @@ def database_connect(config_path: str) -> pyodbc.Connection:
         pyodbc.DatabaseError, pyodbc.InterfaceError: If the connection
         fails
     """
-    with open (config_path, 'r') as config_f:
+    with open(config_path, 'r') as config_f:
         config = json.load(config_f)
     return pyodbc.connect(
         driver=config['driver'],
@@ -69,46 +69,29 @@ def database_connect(config_path: str) -> pyodbc.Connection:
         uid=config['uid'],
         pwd=config['pwd'])
 
-def get_input() -> Tuple[str, str]:
+
+def get_uprn_from_input() -> str:
     """
-    Gets the UPRN and map type as a command line argument, or prompts the
-    user for input if no command line argument exists
+    Gets the UPRN as a command line argument, or prompts the user for
+    input if no command line argument exists
     Returns:
-        Tuple[str, str]: The UPRN and the map type chosen by the user
+        str: The UPRN input by the user
+    Raises:
+        ValueError: If there is more than one argument or if the
+        argument isn't a valid UPRN
     """
     # If there are too many arguments
-    if len(sys.argv) != 3:
-        print(f'{len(sys.argv) -1} arguments found (2 expected)')
-    # If there is two extra argument found, check validity
-    if len(sys.argv) == 3:
+    if len(sys.argv) > 2:
+        raise ValueError(f'{len(sys.argv) -1} arguments found (1 max)')
+    # If there is one extra argument found, check validity
+    if len(sys.argv) == 2:
         uprn = sys.argv[1]
-        map_type = sys.argv[2]
-        if __check_validity(uprn, map_type):
-            return (uprn, map_type)
+        if len(uprn) != 12:
+            raise ValueError(f'{uprn} is not a valid UPRN')
+        return uprn
     # If no arguments are found, prompt for input
     uprn = input('Enter a 12-digit UPRN: ')
-    map_type = input('Enter a map type (\'Esri\' or \'Mapbox\'): ')
-    if __check_validity(uprn, map_type):
-        return (uprn, map_type)
-    raise ValueError('There was a problem with the arguments')
-
-def __check_validity(uprn: str, map_type: str) -> bool:
-    """
-    Checks whether the arguments given are valid
-    Args:
-        uprn: A 12-digit UPRN input
-        map_type: A map type (either Mapbox or Esri) input
-    Returns:
-        bool: True if valid, False (but technically None) if invalid
-    Raises:
-        ValueError: If there are too many arguments or if the arguments aren't
-        valid
-    """
-    if len(uprn) != 12:
-        raise ValueError(f'{uprn} is not a valid UPRN')
-    if (map_type != 'Esri') and (map_type != 'Mapbox'):
-        raise ValueError(f'{map_type} is not a valid map type')
-    return True
+    return uprn
 
 
 def get_location_from_uprn(conn: pyodbc.Connection, uprn: str) -> Location:
@@ -130,31 +113,6 @@ def get_location_from_uprn(conn: pyodbc.Connection, uprn: str) -> Location:
     return Location(
         str(loc.x), str(loc.y), str(loc.lat), str(loc.lng), loc.addr, uprn)
 
-def get_mapbox_map(
-        location: Location,
-        zoom: str,
-        x_size: str,
-        y_size: str) -> None:
-    """
-    Uses the Requests library and the Mapbox API to download a static map
-    image of the location
-    Args:
-        location (Location): The location to get a map for
-        zoom (str): The zoom level of the map (minimum 0, maximum 20)
-        x_size (str): The width of the output image (px)
-        y_size (str): The height of the output image (px)
-    """
-    with open('./mapbox.key', 'r') as key_f:
-        access_token = key_f.read()
-    map_uri = 'https://api.mapbox.com/styles/v1/mapbox/streets-v10/static/' \
-    f'{location.lng},{location.lat},{zoom},0,0/{x_size}x{y_size}@2x?' \
-    f'access_token={access_token}'
-    # Download image to file
-    req = requests.get(map_uri)
-    if req.status_code == 200:
-        img_path = f'./img/mapbox-{location.uprn}-{zoom}.jpg'
-        with open(img_path, 'wb') as image_f:
-            image_f.write(req.content)
 
 def get_arcgis_map(
         location: Location,
@@ -189,9 +147,10 @@ def get_arcgis_map(
         resp = req.content.decode('utf8')
         img_url = json.loads(resp)['results'][0]['value']['url']
         img_req = requests.get(img_url)
-        img_path = f'./img/esri-{location.uprn}-{scale}.jpg'
+        img_path = f'./img/{location.uprn}-{scale}.jpg'
         with open(img_path, 'wb') as image_f:
             image_f.write(img_req.content)
+
 
 def __get_json(
         x: str,
