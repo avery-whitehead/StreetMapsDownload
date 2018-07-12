@@ -2,3 +2,4 @@
 help.json
 __pycache__
 cacert.pem
+data.csv

@@ -78,14 +78,14 @@ def draw_circle_on_template(print_map: Image):
         pasted on
     """
     # [top left x, top left y, bottom right x, bottom right y]
-    top_mask = __draw_ellipse(print_map, [2334, 2321, 2521, 2508], 12, 4)
-    bot_mask = __draw_ellipse(print_map, [2236, 5311, 2686, 5761], 20, 4)
+    top_mask = _draw_ellipse(print_map, [2334, 2321, 2521, 2508], 12, 4)
+    bot_mask = _draw_ellipse(print_map, [2236, 5311, 2686, 5761], 20, 4)
     print_map.paste('black', mask=top_mask)
     print_map.paste('black', mask=bot_mask)
     return print_map
 
 
-def __draw_ellipse(
+def _draw_ellipse(
         img: Image,
         bounds: List[int],
         width: int,

@@ -4,6 +4,7 @@ A custom Location class and a series of functions used to perform a request to
 either the ArcGIS or Mapbox REST APIs to return a static map image
 """
 
+from typing import List
 import json
 import sys
 import requests
@@ -45,6 +46,14 @@ class Location:
         """
         for attr, value in self.__dict__.items():
             print(f'{attr}: {value}')
+    
+    def __iter__(self):
+        """
+        Overrides the bult-in __iter__ method to return a list of a
+        Location's attributes
+        """
+        return iter(
+            [self.x, self.y, self.lat, self.lng, self.address, self.uprn])
 
 
 def database_connect(config_path: str) -> pyodbc.Connection:
@@ -56,9 +65,6 @@ def database_connect(config_path: str) -> pyodbc.Connection:
     Returns:
         pyodbc.Connection: A Connection object used as a connection
         to the database
-    Raises:
-        pyodbc.DatabaseError, pyodbc.InterfaceError: If the connection
-        fails
     """
     with open(config_path, 'r') as config_f:
         config = json.load(config_f)
@@ -96,7 +102,7 @@ def get_uprn_from_input() -> str:
 
 def get_location_from_uprn(conn: pyodbc.Connection, uprn: str) -> Location:
     """
-    Queries the SQL database for the latitude, longitude and address
+    Queries the SQL database for the X, Y, latitude, longitude and address
     associated with a UPRN and creates a Location object out of it
     Args:
         conn (pyodbc.Connection): The connection to the database to query
@@ -112,6 +118,34 @@ def get_location_from_uprn(conn: pyodbc.Connection, uprn: str) -> Location:
     loc = cursor.fetchone()
     return Location(
         str(loc.x), str(loc.y), str(loc.lat), str(loc.lng), loc.addr, uprn)
+
+
+def get_all_locations(conn: pyodbc.Connection) -> List[Location]:
+    """
+    Queries the SQL database for every X, Y, latitude, longitude, address
+    and UPRN under a specific constraint and creates a list of location
+    objects containing each one
+    Args:
+        conn (pyodbc.Connection): The connection to the database to query
+    Returns:
+        List[Location]: A list of Location objects containing information
+        about the locations returned by the SQL query
+    """
+    locations = []
+    with open('.\\get_all_locations.sql', 'r') as loc_query_f:
+        loc_query_all = loc_query_f.read()
+    cursor = conn.cursor()
+    cursor.execute(loc_query_all)
+    locs = cursor.fetchall()
+    for loc in locs:
+        locations.append(Location(
+            '{:.2f}'.format(loc.x),
+            '{:.2f}'.format(loc.y),
+            '{:.15f}'.format(loc.lat),
+            '{:.15f}'.format(loc.lng),
+            loc.addr,
+            str(loc.uprn)))
+    return locations
 
 
 def get_arcgis_map(
@@ -134,7 +168,7 @@ def get_arcgis_map(
     map_uri = 'https://ccvgisapp01:6443/arcgis/rest/services/Printing/' \
         'HDCExportWebMap/GPServer/Export Web Map/execute'
     headers = {'Content-Type': 'application/x-www-form-urlencoded'}
-    web_map = __get_json(location.x, location.y, scale, x_size, y_size, dpi)
+    web_map = _get_json(location.x, location.y, scale, x_size, y_size, dpi)
     payload = {
         'Web_Map_as_JSON': web_map,
         'Format': 'JPG',
@@ -152,7 +186,7 @@ def get_arcgis_map(
             image_f.write(img_req.content)
 
 
-def __get_json(
+def _get_json(
         x: str,
         y: str,
         scale: str,
