@@ -3,6 +3,7 @@ main_clusters.py
 Uses the classes and functions in getmaps.py, createprints.py and
 clusters.py to create a map for a series of clusters containing
 multiple properties and points of interest
+TODO: tweak epsilon value
 """
 
 import csv
