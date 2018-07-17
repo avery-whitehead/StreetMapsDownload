@@ -139,10 +139,10 @@ def get_all_locations(conn: pyodbc.Connection) -> List[Location]:
     locs = cursor.fetchall()
     for loc in locs:
         locations.append(Location(
-            str(loc.x),
-            str(loc.y),
-            str(loc.lat),
-            str(loc.lng),
+            '{:.2f}'.format(loc.x),
+            '{:.2f}'.format(loc.y),
+            '{:.15f}'.format(loc.lat),
+            '{:.15f}'.format(loc.lng),
             loc.addr,
             str(loc.uprn)))
     return locations
@@ -155,7 +155,7 @@ def get_arcgis_map(
         y_size: int,
         dpi: int) -> None:
     """
-    Uses the Requests library and the ArcGIS to download a static map
+    Uses the Requests library and the ArcGIS API to download a static map
     image of the location
     Args:
         location (Location): The location to get a map for
@@ -185,6 +185,43 @@ def get_arcgis_map(
         with open(img_path, 'wb') as image_f:
             image_f.write(img_req.content)
 
+def get_clustered_map(
+        cluster: List[Location],
+        scale: str,
+        x_size: int,
+        y_size: int,
+        dpi: int) -> None:
+    """
+    Uses the Requests library and the ArcGIS API to download a static map
+    image of a cluster of locations, with each location highlighted with
+    a marker
+    Args:
+        cluster (List[Location]): The cluster of locations to display on a map
+        scale (str): The scale to display the map at (higher numbers are more
+        zoomed out)
+        x_size (int): The width of the output image (px)
+        y_size (int): The height of the output image (px)
+        dpi (int): The DPI of the output image (default is 96)
+    """
+    map_uri = 'https://ccvgisapp01:6443/arcgis/rest/services/Printing/' \
+        'HDCExportWebMap/GPServer/Export Web Map/execute'
+    headers = {'Content-Type': 'application/x-www-form-urlencoded'}
+    web_map = _get_clustered_json(scale, cluster, x_size, y_size, dpi)
+    payload = {
+        'Web_Map_as_JSON': web_map,
+        'Format': 'JPG',
+        'f': 'json',
+        'Layout_Template': 'MAP_ONLY'}
+    cafile = '.\\cacert.pem'
+    req = requests.post(map_uri, headers=headers, data=payload, verify=cafile)
+    if req.status_code == 200:
+        # Returns a JSON formatted bytes type
+        resp = req.content.decode('utf8')
+        img_url = json.loads(resp)['results'][0]['value']['url']
+        img_req = requests.get(img_url)
+        img_path = f'./img/0-{scale}.jpg'
+        with open(img_path, 'wb') as image_f:
+            image_f.write(img_req.content)
 
 def _get_json(
         x: str,
@@ -217,3 +254,55 @@ def _get_json(
     web_map['exportOptions']['outputSize'] = [x_size, y_size]
     web_map['exportOptions']['dpi'] = dpi
     return str(web_map)
+
+def _get_clustered_json(
+        scale: str,
+        cluster: List[Location],
+        x_size: int,
+        y_size: int,
+        dpi: int) -> str:
+    """
+    Loads the JSON template from file, fills in the x and y values and
+    removes the whitespace so it can be passed as a parameter to the ArcGIS API
+    Args:
+        scale (str): The scale to display the map at (higher numbers are more
+        zoomed out)
+        cluster (List[Location]): The cluster of Location objects to draw as
+        features on the map
+        x_size (int): The width of the output image (px)
+        y_size (int): The height of the output image (px)
+        dpi (int): The DPI of the output image (default is 96)
+    Returns:
+        string: The filled in and formatted JSON template as a string
+    """
+    with open('.\\web_map_clustered.json', 'r') as web_map_f:
+        web_map = json.load(web_map_f)
+    web_map['mapOptions']['extent']['xmin'] = cluster[0].x
+    web_map['mapOptions']['extent']['xmax'] = cluster[0].x
+    web_map['mapOptions']['extent']['ymin'] = cluster[0].y
+    web_map['mapOptions']['extent']['ymax'] = cluster[0].y
+    web_map['mapOptions']['scale'] = scale
+    web_map['operationalLayers'][0]['featureCollection']['layers'][0]['featureSet']['features'] = _convert_cluster_to_features(cluster)
+    web_map['exportOptions']['outputSize'] = [x_size, y_size]
+    web_map['exportOptions']['dpi'] = dpi
+    print(web_map)
+    return str(web_map)
+
+def _convert_cluster_to_features(cluster: List[Location]) -> str:
+    """
+    Converts a cluster of Location objects to a JSON array to be used
+    in ArcGIS's ExportWebMap JSON
+    Args:
+        cluster (List[Location]): The cluster of Location objects to draw as
+        features on the map
+    Returns:
+        str: The features array containing the cluster locations as a
+        no-whitespace JSON string
+    """
+    features = ['[']
+    for location in cluster:
+        geometry = f'{{"geometry":{{"x":{location.x},"y":{location.y},' \
+            '"spatialReference":{"wkid":27700}}}'
+        features.append(geometry)
+    return ','.join(features)
+        
