@@ -139,10 +139,10 @@ def get_all_locations(conn: pyodbc.Connection) -> List[Location]:
     locs = cursor.fetchall()
     for loc in locs:
         locations.append(Location(
-            '{:.2f}'.format(loc.x),
-            '{:.2f}'.format(loc.y),
-            '{:.15f}'.format(loc.lat),
-            '{:.15f}'.format(loc.lng),
+            str(loc.x),
+            str(loc.y),
+            str(loc.lat),
+            str(loc.lng),
             loc.addr,
             str(loc.uprn)))
     return locations

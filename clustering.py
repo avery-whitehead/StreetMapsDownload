@@ -73,8 +73,6 @@ def plot_db_clusters(X: np.ndarray, db: DBSCAN) -> None:
             col = [0, 0, 0, 1]
         class_member_mask = (labels == k)
         xy = X[class_member_mask & core_samples_mask]
-        if k == -1:
-            print(xy)
         plt.plot(
             xy[:, 0],
             xy[:, 1],
