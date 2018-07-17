@@ -36,7 +36,12 @@ if __name__ == '__main__':
     csv_path = _write_locations_to_csv('.\\.config')
     X = clustering.load_csv_data(csv_path)
     # Episilon and minimum sampling values
-    db = clustering.get_db_object(X, 0.0003, 3)
+    # db = clustering.get_db_object(X, 0.0002, 2)
+    db = clustering.get_db_object(X, 0.09, 2)
     clusters = clustering.get_db_clusters(X, db)
-    clustering.plot_db_clusters(X, db)
-    print(clusters)
+    # clustering.plot_db_clusters(X, db)
+    sum_len = 0
+    for cluster in clusters:
+        # 0th index is noise
+        sum_len += len(cluster.tolist())
+    print(sum_len)

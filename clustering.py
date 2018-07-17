@@ -16,7 +16,7 @@ def load_csv_data(csv_file: str) -> np.ndarray:
     csv_file (str): The path to the CSV file containing data to be clustered
     """
     X = np.genfromtxt(
-        open(csv_file, 'rb'), delimiter=',', skip_header=1, usecols=(3, 2))
+        open(csv_file, 'rb'), delimiter=',', skip_header=1, usecols=(0, 1))
     return X
 
 
@@ -49,9 +49,10 @@ def get_db_clusters(X: np.ndarray, db: DBSCAN) -> List[np.ndarray]:
         NumPy array of the objects in that cluster
     """
     labels = db.labels_
-    # Gets number of clusters in labels, ignoring noise if present.
+    # Gets number of clusters in labels
     n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
-    clusters = [X[labels == i] for i in range(n_clusters_)]
+    # 0th index is noise
+    clusters = [X[labels == i] for i in range(-1, n_clusters_)]
     return clusters
 
 
@@ -64,7 +65,7 @@ def plot_db_clusters(X: np.ndarray, db: DBSCAN) -> None:
     core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
     core_samples_mask[db.core_sample_indices_] = True
     unique_labels = set(labels)
-    cmap = plt.get_cmap('tab20b')
+    cmap = plt.get_cmap('gist_earth')
     colors = [cmap(each) for each in np.linspace(0, 1, len(unique_labels))]
     for k, col in zip(unique_labels, colors):
         if k == -1:
@@ -72,6 +73,8 @@ def plot_db_clusters(X: np.ndarray, db: DBSCAN) -> None:
             col = [0, 0, 0, 1]
         class_member_mask = (labels == k)
         xy = X[class_member_mask & core_samples_mask]
+        if k == -1:
+            print(xy)
         plt.plot(
             xy[:, 0],
             xy[:, 1],
