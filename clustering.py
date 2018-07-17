@@ -16,7 +16,7 @@ def load_csv_data(csv_file: str) -> np.ndarray:
     csv_file (str): The path to the CSV file containing data to be clustered
     """
     X = np.genfromtxt(
-        open(csv_file, 'rb'), delimiter=',', skip_header=1, usecols=(0, 1))
+        open(csv_file, 'rb'), delimiter=',', skip_header=1, usecols=(2, 3))
     return X
 
 

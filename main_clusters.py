@@ -59,8 +59,8 @@ def _get_locations_from_cluster(
     cluster_locations = []
     for location in locations:
         for point in cluster:
-            if (location.x == '{:.2f}'.format(point[0]) and
-                    location.y == '{:.2f}'.format(point[1])):
+            if (location.lat == '{:.15f}'.format(point[0]) and
+                    location.lng == '{:.15f}'.format(point[1])):
                 cluster_locations.append(location)
     return cluster_locations
 
@@ -70,12 +70,9 @@ if __name__ == '__main__':
     csv_path = _write_locations_to_csv(locations)
     X = clustering.load_csv_data(csv_path)
     # Episilon and minimum sampling values
-    # db = clustering.get_db_object(X, 0.0002, 2)
-    db = clustering.get_db_object(X, 0.09, 2)
+    db = clustering.get_db_object(X, 0.0002, 2)
     clusters = clustering.get_db_clusters(X, db)
-    clustering.plot_db_clusters(X, db)
-    cluster_locations_list = []
-    for cluster in clusters:
-        cluster_locations = _get_locations_from_cluster(locations, cluster.tolist())
-        cluster_locations_list.append(cluster_locations)
-    print(len(cluster_locations_list))
+    locations_cluster = _get_locations_from_cluster(locations, clusters[5].tolist())
+    getmaps.get_clustered_map(locations_cluster, 10000, 4663, 2649, 1200)
+
+    # TODO: getmaps clustred JSON functions wrap the features array in double quotes in the middle of the full JSON - need to find some way to remove them so it's valid

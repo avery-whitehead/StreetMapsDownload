@@ -1,0 +1,105 @@
+{
+    "mapOptions": {
+        "showAttribution": false,
+        "extent": {
+            "xmin": "436333.59",
+            "ymin": "493096.62",
+            "xmax": "436333.59",
+            "ymax": "493096.62",
+            "spatialReference": {
+                "wkid": 27700,
+                "latestWkid": 27700
+            }
+        },
+        "scale": 10000,
+        "spatialReference": {
+            "wkid": 27700,
+            "latestWkid": 27700
+        }
+    },
+    "operationalLayers": [
+        {
+            "id": "map_graphics",
+            "opacity": 0.8,
+            "featureCollection": {
+                "layers": [
+                    {
+                        "layerDefinition": {
+                            "name": "pointLayer",
+                            "geometryType": "esriGeometryPoint",
+                            "drawingInfo": {
+                                "renderer": {
+                                    "type": "simple",
+                                    "symbol": {
+                                        "type": "esriSMS",
+                                        "style": "esriSMSCircle",
+                                        "color": [
+                                            255,
+                                            165,
+                                            194,
+                                            255
+                                        ],
+                                        "size": 15,
+                                        "outline": {
+                                            "color": [
+                                                255,
+                                                48,
+                                                144,
+                                                255
+                                            ],
+                                            "width": 3
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "featureSet": {
+                            "features": [
+                                {
+                                    "geometry": {
+                                        "x": 436333.59,
+                                        "y": 493096.62,
+                                        "spatialReference": {
+                                            "wkid": 27700
+                                        }
+                                    }
+                                },
+                                {
+                                    "geometry": {
+                                        "x": 436556,
+                                        "y": 493951,
+                                        "spatialReference": {
+                                            "wkid": 27700
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ],
+    "baseMap": {
+        "title": "BaseMap2",
+        "baseMapLayers": [
+            {
+                "url": "https://ccvgisapp01:6443/arcgis/rest/services/BaseMaps/BaseMap2/MapServer"
+            }
+        ]
+    },
+    "exportOptions": {
+        "outputSize": [
+            4663,
+            3210
+        ],
+        "dpi": 300
+    },
+    "layoutOptions": {
+        "titleText": "Basic Web Map",
+        "scaleBarOptions": {},
+        "legendOptions": {
+            "operationalLayers": []
+        }
+    }
+}
