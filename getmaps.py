@@ -285,8 +285,8 @@ def _get_clustered_json(
     web_map['operationalLayers'][0]['featureCollection']['layers'][0]['featureSet']['features'] = _convert_cluster_to_features(cluster)
     web_map['exportOptions']['outputSize'] = [x_size, y_size]
     web_map['exportOptions']['dpi'] = dpi
-    print(web_map)
-    return str(web_map)
+    print(json.dumps(web_map))
+    return json.dumps(web_map)
 
 def _convert_cluster_to_features(cluster: List[Location]) -> str:
     """
@@ -299,10 +299,16 @@ def _convert_cluster_to_features(cluster: List[Location]) -> str:
         str: The features array containing the cluster locations as a
         no-whitespace JSON string
     """
-    features = ['[']
+    features = []
     for location in cluster:
-        geometry = f'{{"geometry":{{"x":{location.x},"y":{location.y},' \
-            '"spatialReference":{"wkid":27700}}}'
-        features.append(geometry)
-    return ','.join(features)
-        
+        location.print_location()
+        feature = {}
+        geometry = {}
+        geometry['x'] = location.x
+        geometry['y'] = location.y
+        spatial_reference = {}
+        spatial_reference['wkid'] = 27700
+        geometry['spatialReference'] = spatial_reference
+        feature['geometry'] = geometry
+        features.append(feature)
+    return features

@@ -39,7 +39,7 @@
                                             194,
                                             255
                                         ],
-                                        "size": 50,
+                                        "size": 15,
                                         "outline": {
                                             "color": [
                                                 255,
@@ -55,52 +55,8 @@
                         },
                         "featureSet": {
                             "features": [
-					        {
-                                "geometry": {
-                                    "x": 444997.32,
-                                    "y": 500728.89,
-                                    "spatialReference": {
-                                        "wkid": 27700
-                                    }
-                                }
-                            },
-                            {
-                                "geometry": {
-                                    "x": 444986.00,
-                                    "y": 500745.00,
-                                    "spatialReference": {
-                                        "wkid": 27700
-                                    }
-                                }
-                            },
-                            {
-                                "geometry": {
-                                    "x": 444996.00,
-                                    "y": 500725.00,
-                                    "spatialReference": {
-                                        "wkid": 27700
-                                    }
-                                }
-                            },
-                            {
-                                "geometry": {
-                                    "x": 444994.00,
-                                    "y": 500721.00,
-                                    "spatialReference": {
-                                        "wkid": 27700
-                                    }
-                                }
-                            },
-                            {
-                                "geometry": {
-                                    "x": 445000.00,
-                                    "y": 500735.00,
-                                    "spatialReference": {
-                                        "wkid": 27700
-                                    }
-                                }
-                            }
-                        ]
+                                "<featuresArray>"
+                            ]
                         }
                     }
                 ]
