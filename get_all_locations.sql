@@ -4,6 +4,9 @@ SELECT
 	LLPG_LatLng_Lat AS lat,
 	LLPG_LatLng_Lng AS lng,
 	ADDRESS_STR AS addr,
+	STREETNAME AS street,
+	TOWN_NAME AS town,
+	PCODE AS postcode,
 	UPRN as uprn
 FROM
 	(
@@ -11,6 +14,9 @@ FROM
 		xy.MAP_X,
 		xy.MAP_Y,
 		xy.ADDRESS_STR,
+		xy.STREETNAME,
+		xy.TOWN_NAME,
+		xy.PCODE,
 		xy.UPRN,
 		ll.LLPG_LatLng_Lat,
 		ll.LLPG_LatLng_Lng,

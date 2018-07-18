@@ -22,6 +22,9 @@ class Location:
             lat: str,
             lng: str,
             address: str,
+            street: str,
+            town: str,
+            postcode: str,
             uprn: str):
         """
         Args:
@@ -29,7 +32,10 @@ class Location:
             y (str): The y-coordinate of this location
             lat (str): The latitude of this location
             lng (str): The longitude of this location
-            address (str): The address of this location
+            address (str): The full address of this location
+            street (str): The street this location is on
+            town (str): The town this location is in
+            postcode (str): The postcode this location is in
             uprn (str): The UPRN of this location
         """
         self.x = x
@@ -37,6 +43,9 @@ class Location:
         self.lat = lat
         self.lng = lng
         self.address = address
+        self.street = street
+        self.town = town
+        self.postcode = postcode
         self.uprn = uprn
 
     def print_location(self):
@@ -52,8 +61,16 @@ class Location:
         Overrides the bult-in __iter__ method to return a list of a
         Location's attributes
         """
-        return iter(
-            [self.x, self.y, self.lat, self.lng, self.address, self.uprn])
+        return iter([
+            self.x,
+            self.y,
+            self.lat,
+            self.lng,
+            self.address,
+            self.street,
+            self.town,
+            self.postcode,
+            self.uprn])
 
 
 def database_connect(config_path: str) -> pyodbc.Connection:
@@ -117,7 +134,15 @@ def get_location_from_uprn(conn: pyodbc.Connection, uprn: str) -> Location:
     cursor.execute(loc_query, uprn)
     loc = cursor.fetchone()
     return Location(
-        str(loc.x), str(loc.y), str(loc.lat), str(loc.lng), loc.addr, uprn)
+        str(loc.x),
+        str(loc.y),
+        str(loc.lat),
+        str(loc.lng),
+        loc.addr,
+        loc.street,
+        loc.town,
+        loc.postcode,
+        uprn)
 
 
 def get_all_locations(conn: pyodbc.Connection) -> List[Location]:
@@ -144,6 +169,9 @@ def get_all_locations(conn: pyodbc.Connection) -> List[Location]:
             '{:.15f}'.format(loc.lat),
             '{:.15f}'.format(loc.lng),
             loc.addr,
+            loc.street,
+            loc.town,
+            loc.uprn,
             str(loc.uprn)))
     return locations
 
@@ -188,6 +216,8 @@ def get_arcgis_map(
 def get_clustered_map(
         cluster: List[Location],
         scale: str,
+        circle_size: int,
+        outline_width: float,
         x_size: int,
         y_size: int,
         dpi: int) -> None:
@@ -199,6 +229,8 @@ def get_clustered_map(
         cluster (List[Location]): The cluster of locations to display on a map
         scale (str): The scale to display the map at (higher numbers are more
         zoomed out)
+        circle_size (int): The radius of the circle markers
+        outline_width (float): The width of the circle marker outline
         x_size (int): The width of the output image (px)
         y_size (int): The height of the output image (px)
         dpi (int): The DPI of the output image (default is 96)
@@ -206,7 +238,8 @@ def get_clustered_map(
     map_uri = 'https://ccvgisapp01:6443/arcgis/rest/services/Printing/' \
         'HDCExportWebMap/GPServer/Export Web Map/execute'
     headers = {'Content-Type': 'application/x-www-form-urlencoded'}
-    web_map = _get_clustered_json(scale, cluster, x_size, y_size, dpi)
+    web_map = _get_clustered_json(
+        scale, circle_size, outline_width, cluster, x_size, y_size, dpi)
     payload = {
         'Web_Map_as_JSON': web_map,
         'Format': 'JPG',
@@ -219,7 +252,7 @@ def get_clustered_map(
         resp = req.content.decode('utf8')
         img_url = json.loads(resp)['results'][0]['value']['url']
         img_req = requests.get(img_url)
-        img_path = f'./img/0-{scale}.jpg'
+        img_path = f'./img/{cluster[0].uprn}-{scale}.jpg'
         with open(img_path, 'wb') as image_f:
             image_f.write(img_req.content)
 
@@ -257,6 +290,8 @@ def _get_json(
 
 def _get_clustered_json(
         scale: str,
+        circle_size: int,
+        outline_width: float,
         cluster: List[Location],
         x_size: int,
         y_size: int,
@@ -267,6 +302,8 @@ def _get_clustered_json(
     Args:
         scale (str): The scale to display the map at (higher numbers are more
         zoomed out)
+        circle_size (int): The radius of the circle markers
+        outline_width (float): The width of the circle marker outline
         cluster (List[Location]): The cluster of Location objects to draw as
         features on the map
         x_size (int): The width of the output image (px)
@@ -282,10 +319,11 @@ def _get_clustered_json(
     web_map['mapOptions']['extent']['ymin'] = cluster[0].y
     web_map['mapOptions']['extent']['ymax'] = cluster[0].y
     web_map['mapOptions']['scale'] = scale
+    web_map['operationalLayers'][0]['featureCollection']['layers'][0]['layerDefinition']['drawingInfo']['renderer']['symbol']['size'] = circle_size
+    web_map['operationalLayers'][0]['featureCollection']['layers'][0]['layerDefinition']['drawingInfo']['renderer']['symbol']['outline']['width'] = outline_width
     web_map['operationalLayers'][0]['featureCollection']['layers'][0]['featureSet']['features'] = _convert_cluster_to_features(cluster)
     web_map['exportOptions']['outputSize'] = [x_size, y_size]
     web_map['exportOptions']['dpi'] = dpi
-    print(json.dumps(web_map))
     return json.dumps(web_map)
 
 def _convert_cluster_to_features(cluster: List[Location]) -> str:
@@ -301,7 +339,6 @@ def _convert_cluster_to_features(cluster: List[Location]) -> str:
     """
     features = []
     for location in cluster:
-        location.print_location()
         feature = {}
         geometry = {}
         geometry['x'] = location.x

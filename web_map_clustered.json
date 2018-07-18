@@ -39,7 +39,7 @@
                                             194,
                                             255
                                         ],
-                                        "size": 15,
+                                        "size": "<circle_size>",
                                         "outline": {
                                             "color": [
                                                 255,
@@ -47,7 +47,7 @@
                                                 144,
                                                 255
                                             ],
-                                            "width": 3
+                                            "width": "<outline_width>"
                                         }
                                     }
                                 }

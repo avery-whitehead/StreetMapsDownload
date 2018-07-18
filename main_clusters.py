@@ -8,7 +8,7 @@ multiple properties and points of interest
 from typing import List
 import csv
 import getmaps
-# import createprints
+import createprints
 import clustering
 
 def _get_all_locations(config_path: str) -> List[getmaps.Location]:
@@ -72,7 +72,21 @@ if __name__ == '__main__':
     # Episilon and minimum sampling values
     db = clustering.get_db_object(X, 0.0002, 2)
     clusters = clustering.get_db_clusters(X, db)
-    locations_cluster = _get_locations_from_cluster(locations, clusters[5].tolist())
-    getmaps.get_clustered_map(locations_cluster, 10000, 4663, 2649, 1200)
-
-    # TODO: getmaps clustred JSON functions wrap the features array in double quotes in the middle of the full JSON - need to find some way to remove them so it's valid
+    # Skip the 0th element (the non-clustered outliers)
+    for cluster in clusters[1:]:
+        template = createprints.open_template()
+        clust = _get_locations_from_cluster(locations, cluster.tolist())
+        uprn = clust[0].uprn
+        scales = [1500, 10000]
+        maps = [
+            getmaps.get_clustered_map(
+                clust, scales[0], 20, 3, 4663, 3502, 600),
+            getmaps.get_clustered_map(
+                clust, scales[1], 10, 1.5, 4663, 2649, 1200)]
+        template = createprints.write_text_on_template(
+            f'{clust[0].street}, {clust[0].town}, {clust[0].postcode}',
+            template)
+        map_images = createprints.open_maps(uprn, scales)
+        final_maps = createprints.paste_maps(template, map_images)
+        result = createprints.save_print(uprn, final_maps, 'pdf')
+        print(result)

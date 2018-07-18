@@ -36,7 +36,6 @@ def open_maps(uprn: str, scales: List[int]) -> List['Image']:
 
 def write_text_on_template(
         addr_str: str,
-        uprn: str,
         template: Image) -> Image:
     """
     Creates a text box using the Pillow ImageFont and ImageDraw object,
@@ -44,7 +43,6 @@ def write_text_on_template(
     the template
     Args:
         addr_str (str): The address of the location on the maps
-        uprn (str): The UPRN of the location on the maps
         template (Image): The template to write the text on
     Returns:
         Image: The template with the text added
@@ -52,7 +50,7 @@ def write_text_on_template(
     draw = ImageDraw.Draw(template)
     font_path = 'C:\\Windows\\Fonts\\OpenSans-Regular.ttf'
     font = ImageFont.truetype(font_path, 96)
-    draw.text((150, 150), f'{uprn}\n{addr_str}', 'black', font=font)
+    draw.text((150, 150), f'{addr_str}', 'black', font=font)
     return template
 
 
