@@ -18,10 +18,12 @@ def _get_all_locations(config_path: str) -> List[getmaps.Location]:
         config_path (str): The path to a JSON-formatted config file
         containing the database connection string parameters
     Returns:
-
+        List[getmaps.Location]: A list of all Location objects returned
+        by a query
     """
     connection = getmaps.database_connect(config_path)
     return getmaps.get_all_locations(connection)
+
 
 def _write_locations_to_csv(locations: List[getmaps.Location]) -> str:
     """
@@ -40,6 +42,7 @@ def _write_locations_to_csv(locations: List[getmaps.Location]) -> str:
         for location in locations:
             writer.writerow(list(location))
     return csv_path
+
 
 def _get_locations_from_cluster(
         locations: List[getmaps.Location],

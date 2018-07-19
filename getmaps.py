@@ -4,9 +4,11 @@ A custom Location class and a series of functions used to perform a request to
 either the ArcGIS or Mapbox REST APIs to return a static map image
 """
 
-from typing import List
+from typing import List, Tuple
 import json
 import sys
+from shapely.geometry import MultiPoint
+from latlon_to_bng import WGS84toOSGB36 as lat_long_to_x_y
 import requests
 import pyodbc
 
@@ -55,7 +57,7 @@ class Location:
         """
         for attr, value in self.__dict__.items():
             print(f'{attr}: {value}')
-    
+
     def __iter__(self):
         """
         Overrides the bult-in __iter__ method to return a list of a
@@ -171,7 +173,7 @@ def get_all_locations(conn: pyodbc.Connection) -> List[Location]:
             loc.addr,
             loc.street,
             loc.town,
-            loc.uprn,
+            loc.postcode,
             str(loc.uprn)))
     return locations
 
@@ -213,6 +215,7 @@ def get_arcgis_map(
         with open(img_path, 'wb') as image_f:
             image_f.write(img_req.content)
 
+
 def get_clustered_map(
         cluster: List[Location],
         scale: str,
@@ -252,9 +255,11 @@ def get_clustered_map(
         resp = req.content.decode('utf8')
         img_url = json.loads(resp)['results'][0]['value']['url']
         img_req = requests.get(img_url)
-        img_path = f'./img/{cluster[0].uprn}-{scale}.jpg'
+        ## or cluster[0].uprn for non main_postcodes 
+        img_path = f'./img/{cluster[0].postcode}-{scale}.jpg'
         with open(img_path, 'wb') as image_f:
             image_f.write(img_req.content)
+
 
 def _get_json(
         x: str,
@@ -288,6 +293,7 @@ def _get_json(
     web_map['exportOptions']['dpi'] = dpi
     return str(web_map)
 
+
 def _get_clustered_json(
         scale: str,
         circle_size: int,
@@ -314,10 +320,12 @@ def _get_clustered_json(
     """
     with open('.\\web_map_clustered.json', 'r') as web_map_f:
         web_map = json.load(web_map_f)
-    web_map['mapOptions']['extent']['xmin'] = cluster[0].x
-    web_map['mapOptions']['extent']['xmax'] = cluster[0].x
-    web_map['mapOptions']['extent']['ymin'] = cluster[0].y
-    web_map['mapOptions']['extent']['ymax'] = cluster[0].y
+    (x, y) = _get_centroid(cluster)
+    print(x, y)
+    web_map['mapOptions']['extent']['xmin'] = x
+    web_map['mapOptions']['extent']['xmax'] = x
+    web_map['mapOptions']['extent']['ymin'] = y
+    web_map['mapOptions']['extent']['ymax'] = y
     web_map['mapOptions']['scale'] = scale
     web_map['operationalLayers'][0]['featureCollection']['layers'][0]['layerDefinition']['drawingInfo']['renderer']['symbol']['size'] = circle_size
     web_map['operationalLayers'][0]['featureCollection']['layers'][0]['layerDefinition']['drawingInfo']['renderer']['symbol']['outline']['width'] = outline_width
@@ -325,6 +333,25 @@ def _get_clustered_json(
     web_map['exportOptions']['outputSize'] = [x_size, y_size]
     web_map['exportOptions']['dpi'] = dpi
     return json.dumps(web_map)
+
+
+def _get_centroid(cluster: List[Location]) -> Tuple[float, float]:
+    """
+    Given a list of Location objects, gets the centre point of the lat/long
+    pairs and converts them to X/Y coordinates
+    Args:
+        cluster (List[Location]): The Location objects containing the
+        lat/long pairs
+    Returns:
+        Tuple(float, float): The X and Y coordinate of the centre point
+    """
+    lat_long_list = []
+    for location in cluster:
+        lat_long_list.append((float(location.lat), float(location.lng)))
+    points = MultiPoint(lat_long_list)
+    centroid_tuple = list(points.centroid.coords)[0]
+    return lat_long_to_x_y(centroid_tuple[0], centroid_tuple[1])
+
 
 def _convert_cluster_to_features(cluster: List[Location]) -> str:
     """
