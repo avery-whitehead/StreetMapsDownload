@@ -50,9 +50,9 @@ if __name__ == '__main__':
         scales = [1750, 10000]
         maps = [
             getmaps.get_clustered_map(
-                group, scales[0], 20, 3, 4663, 3502, 600),
+                group, scales[0], 20, 3, 4663, 3502, 600, postcode),
             getmaps.get_clustered_map(
-                group, scales[1], 10, 1.5, 4663, 2649, 1200)]
+                group, scales[1], 10, 1.5, 4663, 2649, 1200, postcode)]
         template = createprints.write_text_on_template(
             f'{group[0].street}, {group[0].town}, {postcode}',
             template)

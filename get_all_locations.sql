@@ -93,7 +93,7 @@ FROM
 				UPRN,
 				psr.ServiceID,
 				MIN(r.ScheduleDayID) AS ScheduleDayID
-			FROM dbo.PropertyServiceRounds_I_180712_112921 psr
+			FROM dbo.PropertyServiceRounds_I_180720_110713 psr
 				LEFT JOIN (
                         SELECT *
 				FROM dbo.Rounds

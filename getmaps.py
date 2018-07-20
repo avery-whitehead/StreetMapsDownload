@@ -183,7 +183,8 @@ def get_arcgis_map(
         scale: str,
         x_size: int,
         y_size: int,
-        dpi: int) -> None:
+        dpi: int,
+        prefix: str) -> None:
     """
     Uses the Requests library and the ArcGIS API to download a static map
     image of the location
@@ -194,6 +195,7 @@ def get_arcgis_map(
         x_size (int): The width of the output image (px)
         y_size (int): The height of the output image (px)
         dpi (int): The DPI of the output image (default is 96)
+        prefix(str): The filename prefix to save the file with
     """
     map_uri = 'https://ccvgisapp01:6443/arcgis/rest/services/Printing/' \
         'HDCExportWebMap/GPServer/Export Web Map/execute'
@@ -211,7 +213,7 @@ def get_arcgis_map(
         resp = req.content.decode('utf8')
         img_url = json.loads(resp)['results'][0]['value']['url']
         img_req = requests.get(img_url)
-        img_path = f'./img/{location.uprn}-{scale}.jpg'
+        img_path = f'./img/{prefix}-{scale}.jpg'
         with open(img_path, 'wb') as image_f:
             image_f.write(img_req.content)
 
@@ -223,7 +225,8 @@ def get_clustered_map(
         outline_width: float,
         x_size: int,
         y_size: int,
-        dpi: int) -> None:
+        dpi: int,
+        prefix: str) -> None:
     """
     Uses the Requests library and the ArcGIS API to download a static map
     image of a cluster of locations, with each location highlighted with
@@ -237,6 +240,7 @@ def get_clustered_map(
         x_size (int): The width of the output image (px)
         y_size (int): The height of the output image (px)
         dpi (int): The DPI of the output image (default is 96)
+        prefix(str): The filename prefix to save the file with
     """
     map_uri = 'https://ccvgisapp01:6443/arcgis/rest/services/Printing/' \
         'HDCExportWebMap/GPServer/Export Web Map/execute'
@@ -255,8 +259,7 @@ def get_clustered_map(
         resp = req.content.decode('utf8')
         img_url = json.loads(resp)['results'][0]['value']['url']
         img_req = requests.get(img_url)
-        ## or cluster[0].uprn for non main_postcodes 
-        img_path = f'./img/{cluster[0].postcode}-{scale}.jpg'
+        img_path = f'./img/{prefix}-{scale}.jpg'
         with open(img_path, 'wb') as image_f:
             image_f.write(img_req.content)
 
@@ -321,7 +324,6 @@ def _get_clustered_json(
     with open('.\\web_map_clustered.json', 'r') as web_map_f:
         web_map = json.load(web_map_f)
     (x, y) = _get_centroid(cluster)
-    print(x, y)
     web_map['mapOptions']['extent']['xmin'] = x
     web_map['mapOptions']['extent']['xmax'] = x
     web_map['mapOptions']['extent']['ymin'] = y

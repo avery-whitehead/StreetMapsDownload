@@ -18,20 +18,21 @@ def open_template() -> Image:
     return template
 
 
-def open_maps(uprn: str, scales: List[int]) -> List['Image']:
+def open_maps(prefix: str, scales: List[int]) -> List['Image']:
     """
     Opens the two map image files to be placed on the page
     Args:
-        uprn (str): The UPRN of the location on the maps, used to get the
-        filenames
+        prefix (str): The filename prefix
         scales (List[int]): A list of the zoom levels of the images, suffixed
         to the filenames
     Returns:
         List[Image]: A list of two Images containing the loaded maps
     """
-    return [
-        Image.open(f'.\\img\\{uprn}-{str(scales[0])}.jpg').convert('RGB'),
-        Image.open(f'.\\img\\{uprn}-{str(scales[1])}.jpg').convert('RGB')]
+    maps = []
+    for scale in scales:
+        maps.append(
+            Image.open(f'.\\img\\{prefix}-{str(scale)}.jpg').convert('RGB'))
+    return maps
 
 
 def write_text_on_template(
@@ -59,6 +60,7 @@ def paste_maps(template: Image, maps: List['Image']) -> Image:
     Overlays the map images on to the template image
     Args:
         template (Image): The base template image
+        maps (List[Image]): The list of images to paste on the template
     Returns:
         Image: The template image with the map images pasted on
     """
@@ -66,50 +68,18 @@ def paste_maps(template: Image, maps: List['Image']) -> Image:
     template.paste(maps[1], (148, 4217))
     return template
 
-
-def draw_circle_on_template(print_map: Image):
+def paste_single_map(template: Image, map_: Image) -> Image:
     """
-    Draws a circle over the centre of the maps (so needs to be called atfer
-    paste_maps)
+    Overlays a single map image on to the template image
     Args:
-        print_map (Image): The base template Image with the maps already
-        pasted on
+        template (Image): The base template image
+        map_ (Image): The single image to paste on the template
+    Returns:
+        Image: The template image with the map image pasted on
     """
-    # [top left x, top left y, bottom right x, bottom right y]
-    top_mask = _draw_ellipse(print_map, [2334, 2321, 2521, 2508], 12, 4)
-    bot_mask = _draw_ellipse(print_map, [2236, 5311, 2686, 5761], 20, 4)
-    print_map.paste('black', mask=top_mask)
-    print_map.paste('black', mask=bot_mask)
-    return print_map
-
-
-def _draw_ellipse(
-        img: Image,
-        bounds: List[int],
-        width: int,
-        antialias: int) -> Image:
-    """
-    Helper function for drawing ellipses with a specified thickness.
-    Credit to https://stackoverflow.com/a/34926008
-    Args:
-        img (Image): The image to paste the ellipse on
-        bounds List[int]: The bounding box the circle occupies. Takes the
-        format [top left x, top left y, bottom right x, bottom right y]
-        width: The width of the ellipse line (px)
-        antialiasing: The level of antialising to apply to the line
-    """
-    # Use a single channel image (mode='L') as mask
-    mask = Image.new(
-        size=[int(dim * antialias) for dim in img.size],
-        mode='L', color='black')
-    draw = ImageDraw.Draw(mask)
-    # Draw outer shape in outline colour and inner shape in black/transparent
-    for offset, fill in (width / -2.0, 'white'), (width / 2.0, 'black'):
-        left, top = [(value + offset) * antialias for value in bounds[:2]]
-        right, bottom = [(value - offset) * antialias for value in bounds[2:]]
-        draw.ellipse([left, top, right, bottom], fill=fill)
-    # Downsample the mask using PIL.Image.LANCZOS
-    return mask.resize(img.size, Image.LANCZOS)
+    paste_coords = (148, 652)
+    template.paste(map_, paste_coords)
+    return template
 
 
 def save_print(uprn: str, print_map: Image, ext: str) -> str:

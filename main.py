@@ -19,13 +19,15 @@ if __name__ == '__main__':
     # Most zoomed in to least zoomed in
     scales = [1000, 10000]
     maps = [
-        getmaps.get_arcgis_map(location, scales[0], 4663, 3502, 600),
-        getmaps.get_arcgis_map(location, scales[1], 4663, 2649, 1200)]
+        getmaps.get_arcgis_map(
+            location, scales[0], 4663, 3502, 600, uprn),
+        getmaps.get_arcgis_map(
+            location, scales[1], 4663, 2649, 1200, uprn)]
     template = createprints.write_text_on_template(
-        location.address, uprn, template)
+        f'{location.street}, {location.town}, {location.postcode}',
+        template)
     # Create and print the maps
     map_images = createprints.open_maps(uprn, scales)
-    print_map = createprints.paste_maps(template, map_images)
-    final_maps = createprints.draw_circle_on_template(print_map)
+    final_maps = createprints.paste_maps(template, map_images)
     result = createprints.save_print(uprn, final_maps, 'pdf')
     print(result)
