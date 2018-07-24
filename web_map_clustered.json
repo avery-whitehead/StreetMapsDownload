@@ -20,7 +20,7 @@
     "operationalLayers": [
         {
             "id": "map_graphics",
-            "opacity": 0.5,
+            "opacity": 0.9,
             "featureCollection": {
                 "layers": [
                     {
@@ -61,6 +61,15 @@
                     }
                 ]
             }
+        },
+        {
+            "id": "Default1_5042",
+            "title": "Basic Layers",
+            "opacity": 1,
+            "minScale": 0,
+            "maxScale": 0,
+            "url": "https://ccvgisapp01:6443/arcgis/rest/services/Portal/Default1/MapServer",
+            "visibleLayers": [0, 12, 14, 15]
         }
     ],
     "baseMap": {

@@ -218,52 +218,6 @@ def get_arcgis_map(
             image_f.write(img_req.content)
 
 
-def get_clustered_map(
-        cluster: List[Location],
-        scale: str,
-        circle_size: int,
-        outline_width: float,
-        x_size: int,
-        y_size: int,
-        dpi: int,
-        prefix: str) -> None:
-    """
-    Uses the Requests library and the ArcGIS API to download a static map
-    image of a cluster of locations, with each location highlighted with
-    a marker
-    Args:
-        cluster (List[Location]): The cluster of locations to display on a map
-        scale (str): The scale to display the map at (higher numbers are more
-        zoomed out)
-        circle_size (int): The radius of the circle markers
-        outline_width (float): The width of the circle marker outline
-        x_size (int): The width of the output image (px)
-        y_size (int): The height of the output image (px)
-        dpi (int): The DPI of the output image (default is 96)
-        prefix(str): The filename prefix to save the file with
-    """
-    map_uri = 'https://ccvgisapp01:6443/arcgis/rest/services/Printing/' \
-        'HDCExportWebMap/GPServer/Export Web Map/execute'
-    headers = {'Content-Type': 'application/x-www-form-urlencoded'}
-    web_map = _get_clustered_json(
-        scale, circle_size, outline_width, cluster, x_size, y_size, dpi)
-    payload = {
-        'Web_Map_as_JSON': web_map,
-        'Format': 'JPG',
-        'f': 'json',
-        'Layout_Template': 'MAP_ONLY'}
-    cafile = '.\\cacert.pem'
-    req = requests.post(map_uri, headers=headers, data=payload, verify=cafile)
-    if req.status_code == 200:
-        # Returns a JSON formatted bytes type
-        resp = req.content.decode('utf8')
-        img_url = json.loads(resp)['results'][0]['value']['url']
-        img_req = requests.get(img_url)
-        img_path = f'./img/{prefix}-{scale}.jpg'
-        with open(img_path, 'wb') as image_f:
-            image_f.write(img_req.content)
-
-
 def _get_json(
         x: str,
         y: str,
@@ -297,10 +251,72 @@ def _get_json(
     return str(web_map)
 
 
+def get_clustered_map(
+        cluster: List[Location],
+        scale: str,
+        circle_size: int,
+        circle_colour: Tuple[int, int, int, int],
+        outline_width: float,
+        outline_colour: Tuple[int, int, int, int],
+        x_size: int,
+        y_size: int,
+        dpi: int,
+        prefix: str) -> None:
+    """
+    Uses the Requests library and the ArcGIS API to download a static map
+    image of a cluster of locations, with each location highlighted with
+    a marker
+    Args:
+        cluster (List[Location]): The cluster of locations to display on a map
+        scale (str): The scale to display the map at (higher numbers are more
+        zoomed out)
+        circle_size (int): The radius of the circle markers
+        circle_colour (Tuple[int, int, int, int]): RGBA colour value used to
+        fill the circle
+        outline_width (float): The width of the circle marker outline
+        outline_colour (Tuple[int, int, int, int]): RGBA colour value used to
+        draw the circle outline
+        x_size (int): The width of the output image (px)
+        y_size (int): The height of the output image (px)
+        dpi (int): The DPI of the output image (default is 96)
+        prefix(str): The filename prefix to save the file with
+    """
+    map_uri = 'https://ccvgisapp01:6443/arcgis/rest/services/Printing/' \
+        'HDCExportWebMap/GPServer/Export Web Map/execute'
+    headers = {'Content-Type': 'application/x-www-form-urlencoded'}
+    web_map = _get_clustered_json(
+        scale,
+        circle_size,
+        circle_colour,
+        outline_width,
+        outline_colour,
+        cluster,
+        x_size,
+        y_size,
+        dpi)
+    payload = {
+        'Web_Map_as_JSON': web_map,
+        'Format': 'JPG',
+        'f': 'json',
+        'Layout_Template': 'MAP_ONLY'}
+    cafile = '.\\cacert.pem'
+    req = requests.post(map_uri, headers=headers, data=payload, verify=cafile)
+    if req.status_code == 200:
+        # Returns a JSON formatted bytes type
+        resp = req.content.decode('utf8')
+        img_url = json.loads(resp)['results'][0]['value']['url']
+        img_req = requests.get(img_url)
+        img_path = f'./img/{prefix}-{scale}.jpg'
+        with open(img_path, 'wb') as image_f:
+            image_f.write(img_req.content)
+
+
 def _get_clustered_json(
         scale: str,
         circle_size: int,
+        circle_colour: Tuple[int, int, int, int],
         outline_width: float,
+        outline_colour: Tuple[int, int, int, int],
         cluster: List[Location],
         x_size: int,
         y_size: int,
@@ -312,7 +328,11 @@ def _get_clustered_json(
         scale (str): The scale to display the map at (higher numbers are more
         zoomed out)
         circle_size (int): The radius of the circle markers
+        circle_colour (Tuple[int, int, int, int]): RGBA colour value used to
+        fill the circle
         outline_width (float): The width of the circle marker outline
+        outline_colour (Tuple[int, int, int, int]): RGBA colour value used to
+        draw the circle outline
         cluster (List[Location]): The cluster of Location objects to draw as
         features on the map
         x_size (int): The width of the output image (px)
@@ -330,10 +350,13 @@ def _get_clustered_json(
     web_map['mapOptions']['extent']['ymax'] = y
     web_map['mapOptions']['scale'] = scale
     web_map['operationalLayers'][0]['featureCollection']['layers'][0]['layerDefinition']['drawingInfo']['renderer']['symbol']['size'] = circle_size
+    web_map['operationalLayers'][0]['featureCollection']['layers'][0]['layerDefinition']['drawingInfo']['renderer']['symbol']['color'] = list(circle_colour)
     web_map['operationalLayers'][0]['featureCollection']['layers'][0]['layerDefinition']['drawingInfo']['renderer']['symbol']['outline']['width'] = outline_width
-    web_map['operationalLayers'][0]['featureCollection']['layers'][0]['featureSet']['features'] = _convert_cluster_to_features(cluster)
+    web_map['operationalLayers'][0]['featureCollection']['layers'][0]['layerDefinition']['drawingInfo']['renderer']['symbol']['outline']['color'] = list(outline_colour)
+    web_map['operationalLayers'][0]['featureCollection']['layers'][0]['featureSet']['features'] = _convert_cluster_to_operational_layers(cluster)
     web_map['exportOptions']['outputSize'] = [x_size, y_size]
     web_map['exportOptions']['dpi'] = dpi
+    print(json.dumps(web_map))
     return json.dumps(web_map)
 
 
@@ -355,7 +378,7 @@ def _get_centroid(cluster: List[Location]) -> Tuple[float, float]:
     return lat_long_to_x_y(centroid_tuple[0], centroid_tuple[1])
 
 
-def _convert_cluster_to_features(cluster: List[Location]) -> str:
+def _convert_cluster_to_operational_layers(cluster: List[Location]) -> str:
     """
     Converts a cluster of Location objects to a JSON array to be used
     in ArcGIS's ExportWebMap JSON
@@ -363,7 +386,7 @@ def _convert_cluster_to_features(cluster: List[Location]) -> str:
         cluster (List[Location]): The cluster of Location objects to draw as
         features on the map
     Returns:
-        str: The features array containing the cluster locations as a
+        str: The operationalLayers array containing the cluster locations as a
         no-whitespace JSON string
     """
     features = []

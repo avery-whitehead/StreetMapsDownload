@@ -19,8 +19,8 @@
     },
     "operationalLayers": [
         {
-            "id": "map_graphics",
-            "opacity": 0.8,
+            "id": "p1",
+            "opacity": 0.9,
             "featureCollection": {
                 "layers": [
                     {
@@ -34,20 +34,20 @@
                                         "type": "esriSMS",
                                         "style": "esriSMSCircle",
                                         "color": [
-                                            255,
-                                            165,
-                                            194,
+                                            229,
+                                            115,
+                                            115,
                                             255
                                         ],
-                                        "size": 15,
+                                        "size": 45,
                                         "outline": {
                                             "color": [
-                                                255,
-                                                48,
-                                                144,
+                                                244,
+                                                67,
+                                                54,
                                                 255
                                             ],
-                                            "width": 3
+                                            "width": 9
                                         }
                                     }
                                 }
@@ -63,7 +63,50 @@
                                             "wkid": 27700
                                         }
                                     }
-                                },
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "id": "p2",
+            "opacity": 0.5,
+            "featureCollection": {
+                "layers": [
+                    {
+                        "layerDefinition": {
+                            "name": "pointLayer",
+                            "geometryType": "esriGeometryPoint",
+                            "drawingInfo": {
+                                "renderer": {
+                                    "type": "simple",
+                                    "symbol": {
+                                        "type": "esriSMS",
+                                        "style": "esriSMSCircle",
+                                        "color": [
+                                            86,
+                                            104,
+                                            200,
+                                            255
+                                        ],
+                                        "size": 45,
+                                        "outline": {
+                                            "color": [
+                                                156,
+                                                39,
+                                                176,
+                                                255
+                                            ],
+                                            "width": 9
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "featureSet": {
+                            "features": [
                                 {
                                     "geometry": {
                                         "x": 436556,
@@ -78,6 +121,15 @@
                     }
                 ]
             }
+        },
+        {
+            "id": "Default1_5042",
+            "title": "Basic Layers",
+            "opacity": 1,
+            "minScale": 0,
+            "maxScale": 0,
+            "url": "https://ccvgisapp01:6443/arcgis/rest/services/Portal/Default1/MapServer",
+            "visibleLayers": [0, 12, 14, 15]
         }
     ],
     "baseMap": {
