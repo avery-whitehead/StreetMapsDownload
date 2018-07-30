@@ -252,12 +252,10 @@ def _get_json(
 
 
 def get_clustered_map(
-        cluster: List[Location],
+        postcodes: List['Postcode'],
         scale: str,
         circle_size: int,
-        circle_colour: Tuple[int, int, int, int],
         outline_width: float,
-        outline_colour: Tuple[int, int, int, int],
         x_size: int,
         y_size: int,
         dpi: int,
@@ -271,11 +269,7 @@ def get_clustered_map(
         scale (str): The scale to display the map at (higher numbers are more
         zoomed out)
         circle_size (int): The radius of the circle markers
-        circle_colour (Tuple[int, int, int, int]): RGBA colour value used to
-        fill the circle
         outline_width (float): The width of the circle marker outline
-        outline_colour (Tuple[int, int, int, int]): RGBA colour value used to
-        draw the circle outline
         x_size (int): The width of the output image (px)
         y_size (int): The height of the output image (px)
         dpi (int): The DPI of the output image (default is 96)
@@ -284,13 +278,11 @@ def get_clustered_map(
     map_uri = 'https://ccvgisapp01:6443/arcgis/rest/services/Printing/' \
         'HDCExportWebMap/GPServer/Export Web Map/execute'
     headers = {'Content-Type': 'application/x-www-form-urlencoded'}
-    web_map = _get_clustered_json(
+    web_map = _get_json_from_postcodes(
         scale,
         circle_size,
-        circle_colour,
         outline_width,
-        outline_colour,
-        cluster,
+        postcodes,
         x_size,
         y_size,
         dpi)
@@ -311,29 +303,25 @@ def get_clustered_map(
             image_f.write(img_req.content)
 
 
-def _get_clustered_json(
+def _get_json_from_postcodes(
         scale: str,
         circle_size: int,
-        circle_colour: Tuple[int, int, int, int],
         outline_width: float,
-        outline_colour: Tuple[int, int, int, int],
-        cluster: List[Location],
+        postcodes: List['Postcode'],
         x_size: int,
         y_size: int,
         dpi: int) -> str:
     """
     Loads the JSON template from file, fills in the x and y values and
     removes the whitespace so it can be passed as a parameter to the ArcGIS API
+    Unless this is an overview map, a single-element Postcode list will be
+    passed in
     Args:
         scale (str): The scale to display the map at (higher numbers are more
         zoomed out)
         circle_size (int): The radius of the circle markers
-        circle_colour (Tuple[int, int, int, int]): RGBA colour value used to
-        fill the circle
         outline_width (float): The width of the circle marker outline
-        outline_colour (Tuple[int, int, int, int]): RGBA colour value used to
-        draw the circle outline
-        cluster (List[Location]): The cluster of Location objects to draw as
+        postcodes (List[Postcode]): The list of Postcode objects to draw as
         features on the map
         x_size (int): The width of the output image (px)
         y_size (int): The height of the output image (px)
@@ -343,61 +331,99 @@ def _get_clustered_json(
     """
     with open('.\\web_map_clustered.json', 'r') as web_map_f:
         web_map = json.load(web_map_f)
-    (x, y) = _get_centroid(cluster)
+    (x, y) = _get_centroid(postcodes)
     web_map['mapOptions']['extent']['xmin'] = x
     web_map['mapOptions']['extent']['xmax'] = x
     web_map['mapOptions']['extent']['ymin'] = y
     web_map['mapOptions']['extent']['ymax'] = y
     web_map['mapOptions']['scale'] = scale
-    web_map['operationalLayers'][0]['featureCollection']['layers'][0]['layerDefinition']['drawingInfo']['renderer']['symbol']['size'] = circle_size
-    web_map['operationalLayers'][0]['featureCollection']['layers'][0]['layerDefinition']['drawingInfo']['renderer']['symbol']['color'] = list(circle_colour)
-    web_map['operationalLayers'][0]['featureCollection']['layers'][0]['layerDefinition']['drawingInfo']['renderer']['symbol']['outline']['width'] = outline_width
-    web_map['operationalLayers'][0]['featureCollection']['layers'][0]['layerDefinition']['drawingInfo']['renderer']['symbol']['outline']['color'] = list(outline_colour)
-    web_map['operationalLayers'][0]['featureCollection']['layers'][0]['featureSet']['features'] = _convert_cluster_to_operational_layers(cluster)
+    web_map['operationalLayers'] = _convert_postcodes_to_layers(
+        postcodes, circle_size, outline_width)
     web_map['exportOptions']['outputSize'] = [x_size, y_size]
     web_map['exportOptions']['dpi'] = dpi
     print(json.dumps(web_map))
     return json.dumps(web_map)
 
 
-def _get_centroid(cluster: List[Location]) -> Tuple[float, float]:
+def _get_centroid(postcodes: List['Postcode']) -> Tuple[float, float]:
     """
-    Given a list of Location objects, gets the centre point of the lat/long
-    pairs and converts them to X/Y coordinates
+    Given a list of Postcode objects, flattens the list of Location objects
+    found in each, gets the centre point of all the Location lat/long pairs
+    and converts them to X/Y coordinates
     Args:
-        cluster (List[Location]): The Location objects containing the
+        postcodes (List[Postcode]): The Location objects containing the
         lat/long pairs
     Returns:
         Tuple(float, float): The X and Y coordinate of the centre point
     """
     lat_long_list = []
-    for location in cluster:
-        lat_long_list.append((float(location.lat), float(location.lng)))
+    for postcode in postcodes:
+        for location in postcode.locations:
+            lat_long_list.append((float(location.lat), float(location.lng)))
     points = MultiPoint(lat_long_list)
     centroid_tuple = list(points.centroid.coords)[0]
     return lat_long_to_x_y(centroid_tuple[0], centroid_tuple[1])
 
 
-def _convert_cluster_to_operational_layers(cluster: List[Location]) -> str:
+def _convert_postcodes_to_layers(
+    postcodes: List['Postcode'],
+    circle_size: int,
+    outline_width: int) -> dict:
     """
-    Converts a cluster of Location objects to a JSON array to be used
-    in ArcGIS's ExportWebMap JSON
+    Converts the list of Location objects in a Postcode object to a JSON array
+    to be used in ArcGIS's ExportWebMap JSON
     Args:
         cluster (List[Location]): The cluster of Location objects to draw as
         features on the map
     Returns:
         str: The operationalLayers array containing the cluster locations as a
-        no-whitespace JSON string
+        JSON-style dict
     """
-    features = []
-    for location in cluster:
-        feature = {}
-        geometry = {}
-        geometry['x'] = location.x
-        geometry['y'] = location.y
-        spatial_reference = {}
-        spatial_reference['wkid'] = 27700
-        geometry['spatialReference'] = spatial_reference
-        feature['geometry'] = geometry
-        features.append(feature)
-    return features
+    for postcode in postcodes:
+        operational_layers = []
+        features = []
+        for location in postcode.locations:
+            feature = {}
+            geometry = {}
+            geometry['x'] = float(location.x)
+            geometry['y'] = float(location.y)
+            geometry['spatialReference'] = {}
+            geometry['spatialReference']['wkid'] = 27700
+            feature['geometry'] = geometry
+            features.append(feature)
+        feature_set = {}
+        feature_set['features'] = features
+        layers = {}
+        layer_definition = {}
+        layer_definition['name'] = 'pointLayer'
+        layer_definition['geometryType'] = 'esriGeometryPoint'
+        layer_definition['drawingInfo'] = {}
+        layer_definition['drawingInfo']['renderer'] = {}
+        layer_definition['drawingInfo']['renderer']['type'] = 'simple'
+        layer_definition['drawingInfo']['renderer']['symbol'] = {}
+        layer_definition['drawingInfo']['renderer']['symbol']['type'] = 'esriSMS'
+        layer_definition['drawingInfo']['renderer']['symbol']['style'] = 'esriSMSCircle'
+        layer_definition['drawingInfo']['renderer']['symbol']['color'] = postcode.fill_colour
+        layer_definition['drawingInfo']['renderer']['symbol']['size'] = circle_size
+        layer_definition['drawingInfo']['renderer']['symbol']['outline'] = {}
+        layer_definition['drawingInfo']['renderer']['symbol']['outline']['color'] = postcode.outline_colour
+        layer_definition['drawingInfo']['renderer']['symbol']['outline']['width'] = outline_width
+        layers['layerDefinition'] = layer_definition
+        layers['featureSet'] = feature_set
+        feature_collection = {}
+        feature_collection['layers'] = [layers]
+        operational_layer = {}
+        operational_layer['id'] = postcode.postcode
+        operational_layer['opacity'] = 0.9
+        operational_layer['featureCollection'] = feature_collection
+        operational_layers.append(operational_layer)
+    basic_layer = {}
+    basic_layer['id'] = 'Default1_5042'
+    basic_layer['title'] = 'Basic Layers'
+    basic_layer['opacity'] = 1
+    basic_layer['minScale'] = 0
+    basic_layer['maxScale'] = 0
+    basic_layer['url'] = 'https://ccvgisapp01:6443/arcgis/rest/services/Portal/Default1/MapServer'
+    basic_layer['visibleLayers'] = [0, 12, 14, 15]
+    operational_layers.append(basic_layer)
+    return operational_layers
