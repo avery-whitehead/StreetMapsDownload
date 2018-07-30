@@ -298,6 +298,7 @@ def get_clustered_map(
         resp = req.content.decode('utf8')
         img_url = json.loads(resp)['results'][0]['value']['url']
         img_req = requests.get(img_url)
+        print(img_req.url)
         img_path = f'./img/{prefix}-{scale}.jpg'
         with open(img_path, 'wb') as image_f:
             image_f.write(img_req.content)
@@ -366,9 +367,9 @@ def _get_centroid(postcodes: List['Postcode']) -> Tuple[float, float]:
 
 
 def _convert_postcodes_to_layers(
-    postcodes: List['Postcode'],
-    circle_size: int,
-    outline_width: int) -> dict:
+        postcodes: List['Postcode'],
+        circle_size: int,
+        outline_width: int) -> dict:
     """
     Converts the list of Location objects in a Postcode object to a JSON array
     to be used in ArcGIS's ExportWebMap JSON
@@ -379,8 +380,8 @@ def _convert_postcodes_to_layers(
         str: The operationalLayers array containing the cluster locations as a
         JSON-style dict
     """
+    operational_layers = []
     for postcode in postcodes:
-        operational_layers = []
         features = []
         for location in postcode.locations:
             feature = {}

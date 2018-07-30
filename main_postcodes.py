@@ -5,13 +5,14 @@ create a map for each postcode. Does not use an actual clustering
 algorithm unlike main_clusters.py
 """
 
-from colorsys import hsv_to_rgb
+from colorsys import hls_to_rgb
 from collections import defaultdict
-from random import shuffle
 from typing import List, Tuple
 from getmaps import Location
+import random
 import getmaps
 import createprints
+import colourgen
 
 class Postcode:
     """
@@ -93,25 +94,12 @@ def _generate_colours(amount: int) -> List[List[Tuple[int]]]:
         outline colour
     """
     colours = []
-    hue_interval = 360 / amount
-    for i in range(1, amount + 1):
-        hsv_fill = (i * hue_interval/360, 20/100, 90/100)
-        hsv_line = (i * hue_interval/360, 35/100, 75/100)
-        rgb_fill = hsv_to_rgb(hsv_fill[0], hsv_fill[1], hsv_fill[2])
-        rgb_line = hsv_to_rgb(hsv_line[0], hsv_line[1], hsv_line[2])
-        colours.append(
-            # Include 255 alpha value
-            [(int(rgb_fill[0] * 255),
-              int(rgb_fill[1] * 255),
-              int(rgb_fill[2] * 255),
-              255),
-             (int(rgb_line[0] * 255),
-             int(rgb_line[1] * 255),
-             int(rgb_line[2] * 255),
-             255)])
-        # Shuffle the colours so there's less of a smooth gradient
-        shuffle(colours)
+    fill = colourgen.get_rgb_fill(amount)
+    for i in range(amount):
+        line = (fill[i][0] - 45, fill[i][1] - 45, fill[i][2], 255)
+        colours.append([fill[i], line])
     return colours
+
 
 
 if __name__ == '__main__':
@@ -121,9 +109,28 @@ if __name__ == '__main__':
     colours = _generate_colours(len(postcode_groups))
     for index, (postcode, group) in enumerate(postcode_groups.items()):
         # Create a Postcode object for each postcode
-        postcode_objs.append(Postcode(postcode, group, colours[index][0], colours[index][1]))
+        postcode_objs.append(Postcode(
+            postcode,
+            group,
+            colours[index][0],
+            colours[index][1]))
+    # Creates an overview map out of all the postcodes
+    template = createprints.open_template()
+    scales = [23000]
+    maps = [getmaps.get_clustered_map(
+        postcode_objs,
+        scales[0],
+        90,
+        15,
+        4663,
+        6214,
+        128,
+        'overview')]
+    map_image = createprints.open_maps('overview', scales)[0]
+    final_map = createprints.paste_single_map(template, map_image)
+    result = createprints.save_print('overview', final_map, 'pdf')
+    print(result)
     for postcode_obj in postcode_objs:
-        #postcode_obj.print_postcode()
         template = createprints.open_template()
         scales = [1750, 10000]
         maps = [

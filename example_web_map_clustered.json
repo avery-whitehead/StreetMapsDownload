@@ -139,19 +139,5 @@
                 "url": "https://ccvgisapp01:6443/arcgis/rest/services/BaseMaps/BaseMap2/MapServer"
             }
         ]
-    },
-    "exportOptions": {
-        "outputSize": [
-            4663,
-            3210
-        ],
-        "dpi": 300
-    },
-    "layoutOptions": {
-        "titleText": "Basic Web Map",
-        "scaleBarOptions": {},
-        "legendOptions": {
-            "operationalLayers": []
-        }
     }
 }
