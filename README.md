@@ -13,19 +13,25 @@ GIS stuff, machine learning stuff and image processing stuff in one handy map-ma
 
 ## Library files
 
-`colourgen.py` - Creates a list of n visually distinct colours used to label the markers on the map
+`colourgen.py` - Creates a list of n visually distinct colours used to label the markers on the map, used in all main files
 
-`getmaps.py` - Constructs one or more [ExportWebMap](https://developers.arcgis.com/rest/services-reference/exportwebmap-specification.htm) JSON representations to be passed to the ArcGIS REST API, returning a URL of the web maps
+`getmaps.py` - Constructs one or more [ExportWebMap](https://developers.arcgis.com/rest/services-reference/exportwebmap-specification.htm) JSON representations to be passed to the ArcGIS REST API, returning a URL of the web maps, used in all main files
 
-`createprints.py` - Uses the Pillow imaging library to create an image of the web maps laid out on a A4-sized template and converts the image to a PDF
+`createprints.py` - Uses the Pillow imaging library to create an image of the web maps laid out on a A4-sized template and converts the image to a PDF, used in all main files
 
-`clustering.py` - Helper functions for `main_clusters.py`, uses the scikit-learn machine learning library's implementation of DBSCAN to create a list of clusters given a list of locations
+`clustering.py` - Uses the scikit-learn machine learning library's implementation of DBSCAN to create a list of clusters given a list of locations, used in `main_clusters.py`
 
-## JSON files
+### JSON files
 
 `web_map.json` - Basic ExportWebMap representation for a single location, used in `main.py`
 
 `web_map_clustered.json` - Extension of `web_map.json` to allow for multiple locations to be marked on each map, used in `main_postcodes.py` and `main_clusters.py`
+
+### SQL files
+
+`get_location.sql` - Returns some geodetic info (WGS84 latitudes and longitudes, OSGB36 easting and northings) and some address data for a single location, used in `main.py`
+
+`get_all_locations.sql` - Returns the same geodetic and address info, but for an arbitrary number of locations, used in `main_postcodes.py` and `main_clusters.py`
 
 ## Example
 
