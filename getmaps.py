@@ -7,7 +7,7 @@ either the ArcGIS or Mapbox REST APIs to return a static map image
 from typing import List, Tuple
 import json
 import sys
-from shapely.geometry import MultiPoint
+from shapely.geometry import  MultiPoint, Polygon
 from latlon_to_bng import WGS84toOSGB36 as lat_long_to_x_y
 import requests
 import pyodbc
@@ -298,7 +298,6 @@ def get_clustered_map(
         resp = req.content.decode('utf8')
         img_url = json.loads(resp)['results'][0]['value']['url']
         img_req = requests.get(img_url)
-        print(img_req.url)
         img_path = f'./img/{prefix}-{scale}.jpg'
         with open(img_path, 'wb') as image_f:
             image_f.write(img_req.content)
@@ -342,7 +341,6 @@ def _get_json_from_postcodes(
         postcodes, circle_size, outline_width)
     web_map['exportOptions']['outputSize'] = [x_size, y_size]
     web_map['exportOptions']['dpi'] = dpi
-    print(json.dumps(web_map))
     return json.dumps(web_map)
 
 
@@ -360,9 +358,14 @@ def _get_centroid(postcodes: List['Postcode']) -> Tuple[float, float]:
     lat_long_list = []
     for postcode in postcodes:
         for location in postcode.locations:
-            lat_long_list.append((float(location.lat), float(location.lng)))
-    points = MultiPoint(lat_long_list)
-    centroid_tuple = list(points.centroid.coords)[0]
+            lat_long_list.append([float(location.lat), float(location.lng)])
+    # If there is more than one Postcode object
+    if len(postcodes) > 1:
+        poly = Polygon(lat_long_list)
+        centroid_tuple = poly.centroid.coords[0]
+    else:
+        points = MultiPoint(lat_long_list)
+        centroid_tuple = list(points.centroid.coords)[0]
     return lat_long_to_x_y(centroid_tuple[0], centroid_tuple[1])
 
 

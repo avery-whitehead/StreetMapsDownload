@@ -5,11 +5,9 @@ create a map for each postcode. Does not use an actual clustering
 algorithm unlike main_clusters.py
 """
 
-from colorsys import hls_to_rgb
 from collections import defaultdict
 from typing import List, Tuple
 from getmaps import Location
-import random
 import getmaps
 import createprints
 import colourgen
@@ -116,7 +114,7 @@ if __name__ == '__main__':
             colours[index][1]))
     # Creates an overview map out of all the postcodes
     template = createprints.open_template()
-    scales = [23000]
+    scales = [36000]
     maps = [getmaps.get_clustered_map(
         postcode_objs,
         scales[0],
