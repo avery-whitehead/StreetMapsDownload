@@ -17,12 +17,18 @@ GIS stuff, machine learning stuff and image processing stuff in one handy map-ma
 
 `getmaps.py` - Constructs one or more [ExportWebMap](https://developers.arcgis.com/rest/services-reference/exportwebmap-specification.htm) JSON representations to be passed to the ArcGIS REST API, returning a URL of the web maps
 
-`createprints.py` - Uses the Pillow imaging library to create an image of the web maps laid out on a A4-sized template, and converts the image to a PDF
+`createprints.py` - Uses the Pillow imaging library to create an image of the web maps laid out on a A4-sized template and converts the image to a PDF
 
 `clustering.py` - Helper functions for `main_clusters.py`, uses the scikit-learn machine learning library's implementation of DBSCAN to create a list of clusters given a list of locations
 
-## Examples
+## JSON files
+
+`web_map.json` - Basic ExportWebMap representation for a single location, used in `main.py`
+
+`web_map_clustered.json` - Extension of `web_map.json` to allow for multiple locations to be marked on each map, used in `main_postcodes.py` and `main_clusters.py`
+
+## Example
 
 ![example map](https://raw.githubusercontent.com/james-whitehead/StreetMapsDownload/master/examples/overview.jpg)
-(Left) An overview map of every location group determined by postcode
+(Left) An overview map of every location group determined by postcode  
 (Middle and right) Higher-detail maps of two of the location groups found in the overview map
