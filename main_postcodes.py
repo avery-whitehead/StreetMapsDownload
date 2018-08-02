@@ -8,6 +8,7 @@ algorithm unlike main_clusters.py
 from collections import defaultdict
 from typing import List, Tuple
 from getmaps import Location
+from colorsys import rgb_to_hls
 import getmaps
 import createprints
 import colourgen
@@ -96,6 +97,7 @@ def _generate_colours(amount: int) -> List[List[Tuple[int]]]:
     for i in range(amount):
         line = (fill[i][0] - 45, fill[i][1] - 45, fill[i][2], 255)
         colours.append([fill[i], line])
+    colours.sort(key=lambda x: rgb_to_hls(x[0][0], x[0][1], x[0][2]))
     return colours
 
 
@@ -112,6 +114,7 @@ if __name__ == '__main__':
             group,
             colours[index][0],
             colours[index][1]))
+    postcode_objs.sort(key=lambda x: (sum([float(i.lat) for i in x.locations]) / len(x.locations)) + sum([float(i.lng) for i in x.locations]) / len(x.locations))
     # Creates an overview map out of all the postcodes
     template = createprints.open_template()
     scales = [36000]
