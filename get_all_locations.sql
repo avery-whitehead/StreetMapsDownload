@@ -93,7 +93,7 @@ FROM
 				UPRN,
 				psr.ServiceID,
 				MIN(r.ScheduleDayID) AS ScheduleDayID
-			FROM dbo.PropertyServiceRounds_I_180720_110713 psr
+			FROM dbo.PropertyServiceRounds_I_180831_102636 psr
 				LEFT JOIN (
                         SELECT *
 				FROM dbo.Rounds
@@ -151,6 +151,6 @@ WHERE (
 	MIX IS NOT NULL OR
 	GLASS IS NOT NULL OR (
 		GW IS NOT NULL AND
-		oldGW IS NOT NULL
+		(oldGW is not null and newGW is not null)
 	)
 )

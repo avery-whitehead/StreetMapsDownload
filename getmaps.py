@@ -7,7 +7,7 @@ either the ArcGIS or Mapbox REST APIs to return a static map image
 from typing import List, Tuple
 import json
 import sys
-from shapely.geometry import  MultiPoint, Polygon
+from shapely.geometry import MultiPoint, Polygon
 from latlon_to_bng import WGS84toOSGB36 as lat_long_to_x_y
 import requests
 import pyodbc

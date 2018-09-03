@@ -7,8 +7,8 @@ algorithm unlike main_clusters.py
 
 from collections import defaultdict
 from typing import List, Tuple
-from getmaps import Location
 from colorsys import rgb_to_hls
+from getmaps import Location
 import getmaps
 import createprints
 import colourgen
