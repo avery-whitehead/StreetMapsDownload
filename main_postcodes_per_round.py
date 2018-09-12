@@ -22,7 +22,8 @@ class Postcode:
             postcode: str,
             locations: List[Location],
             fill_colour: Tuple[int],
-            outline_colour: Tuple[int]):
+            outline_colour: Tuple[int],
+            rounds: List[str]):
         """
         Args:
             postcode (str): The postcode of this object
@@ -32,11 +33,13 @@ class Postcode:
             to fill the circles that identify this postcode on the map
             outline_colour (Tuple[int]): The RGBA colour used
             to outline the circles that identify this postcode on the map
+            rounds (List[str]): The list of rounds that serve this postcode
         """
         self.postcode = postcode
         self.locations = locations
         self.fill_colour = fill_colour
         self.outline_colour = outline_colour
+        self.rounds = rounds
 
 
     def print_postcode(self):
@@ -74,10 +77,39 @@ def _group_locations_by_postcode(
         List[List[Location]]: The nested list of grouped Location
         objects
     """
-    postcode_dict = defaultdict(list)
+    postcode_list = defaultdict(list)
     for location in locations:
-        postcode_dict[location.postcode].append(location)
-    return postcode_dict
+        postcode_list[location.postcode].append(location)
+    return postcode_list
+
+
+def _get_rounds(config_path: str) -> List[str]:
+    """
+    Gets a list of the unique round type and number pairs that have been
+    changed
+    Args:
+        config_path (str): The path to a JSON-formatted config file
+        containing the database connection string parameters
+    Returns:
+        List[str]: A list of round type and number pairs with no duplicate
+        values
+    """
+    connection = getmaps.database_connect(config_path)
+    rounds = []
+    with open ('.\\get_rounds.sql', 'r') as rounds_query_f:
+        rounds_query = rounds_query_f.read()
+    cursor = connection.cursor()
+    cursor.execute(rounds_query)
+    rows = cursor.fetchall()
+    for row in rows:
+        for col in row:
+            if col != None:
+                rounds.append(col)
+    return list(set(rounds))
+
+
+def _assign_rounds_to_postcode(postcode_objs: List[Postcode], ):
+    pass
 
 
 def _generate_colours(amount: int) -> List[List[Tuple[int]]]:
@@ -101,7 +133,6 @@ def _generate_colours(amount: int) -> List[List[Tuple[int]]]:
     return colours
 
 
-
 if __name__ == '__main__':
     locations = _get_all_locations('.\\.config')
     postcode_groups = _group_locations_by_postcode(locations)
@@ -113,11 +144,18 @@ if __name__ == '__main__':
             postcode,
             group,
             colours[index][0],
-            colours[index][1]))
+            colours[index][1],
+            None))
     postcode_objs.sort(key=lambda x: (sum([float(i.lat) for i in x.locations]) / len(x.locations)) + sum([float(i.lng) for i in x.locations]) / len(x.locations))
+    print(_get_rounds('.\\.config'))
+    for postcode_obj in postcode_objs:
+        for location in postcode_obj.locations:
+            location.print_location()
+    print(type(postcode_objs))
+    """
     # Creates an overview map out of all the postcodes
     template = createprints.open_template()
-    template = createprints.write_text_on_template('Overview', template)
+    template = createprints.write_text_on_template('RECY R34 Overview', template)
     scales = [36000]
     maps = [getmaps.get_clustered_map(
         postcode_objs,
@@ -157,9 +195,11 @@ if __name__ == '__main__':
         template = createprints.write_text_on_template(
             f'{postcode_obj.locations[0].street}, ' \
             f'{postcode_obj.locations[0].town}, ' \
-            f'{postcode_obj.postcode}',
+            f'{postcode_obj.postcode}, ' \
+            'RECY R34',
             template)
         map_images = createprints.open_maps(postcode_obj.postcode, scales)
         pasted = createprints.paste_maps(template, map_images)
         result = createprints.save_print(postcode_obj.postcode, pasted, 'pdf')
         print(result)
+    """

@@ -27,7 +27,8 @@ class Location:
             street: str,
             town: str,
             postcode: str,
-            uprn: str):
+            uprn: str,
+            rounds: List[str]):
         """
         Args:
             x (str): The x-coordinate of this location
@@ -39,6 +40,7 @@ class Location:
             town (str): The town this location is in
             postcode (str): The postcode this location is in
             uprn (str): The UPRN of this location
+            rounds (List[str]): The rounds this location is under
         """
         self.x = x
         self.y = y
@@ -49,6 +51,7 @@ class Location:
         self.town = town
         self.postcode = postcode
         self.uprn = uprn
+        self.rounds = rounds
 
     def print_location(self):
         """
@@ -72,7 +75,8 @@ class Location:
             self.street,
             self.town,
             self.postcode,
-            self.uprn])
+            self.uprn,
+            self.rounds])
 
 
 def database_connect(config_path: str) -> pyodbc.Connection:
@@ -144,7 +148,8 @@ def get_location_from_uprn(conn: pyodbc.Connection, uprn: str) -> Location:
         loc.street,
         loc.town,
         loc.postcode,
-        uprn)
+        uprn,
+        [loc.REF, loc.RECY, loc.MIX, loc.GLASS, loc.GW])
 
 
 def get_all_locations(conn: pyodbc.Connection) -> List[Location]:
@@ -159,7 +164,7 @@ def get_all_locations(conn: pyodbc.Connection) -> List[Location]:
         about the locations returned by the SQL query
     """
     locations = []
-    with open('.\\get_all_locations.sql', 'r') as loc_query_f:
+    with open('.\\get_all_locations_per_round.sql', 'r') as loc_query_f:
         loc_query_all = loc_query_f.read()
     cursor = conn.cursor()
     cursor.execute(loc_query_all)
@@ -174,7 +179,8 @@ def get_all_locations(conn: pyodbc.Connection) -> List[Location]:
             loc.street,
             loc.town,
             loc.postcode,
-            str(loc.uprn)))
+            str(loc.uprn),
+            [loc.REF, loc.RECY, loc.MIX, loc.GLASS, loc.GW]))
     return locations
 
 
@@ -359,8 +365,11 @@ def _get_centroid(postcodes: List['Postcode']) -> Tuple[float, float]:
     for postcode in postcodes:
         for location in postcode.locations:
             lat_long_list.append([float(location.lat), float(location.lng)])
-    # If there is more than one Postcode object
-    if len(postcodes) > 1:
+    # If there are less than three locations, the x and y need to be
+    # calculated and input manually        
+    if len(postcodes) < 3:
+        return(lat_long_list[0][0], lat_long_list[0][1])
+    elif len(postcodes) >= 3:
         poly = Polygon(lat_long_list)
         centroid_tuple = poly.centroid.coords[0]
     else:

@@ -1,14 +1,4 @@
-
 SELECT
-    MAP_X as x,
-    MAP_Y as y,
-    LLPG_LatLng_Lat AS lat,
-    LLPG_LatLng_Lng AS lng,
-    ADDRESS_STR AS addr,
-    STREETNAME AS street,
-    TOWN_NAME AS town,
-    PCODE AS postcode,
-    UPRN as uprn,
     REF as REF,
     RECY as RECY,
     MIX as MIX,
@@ -16,15 +6,6 @@ SELECT
     GW as GW
 FROM (
     SELECT
-        xy.MAP_X,
-        xy.MAP_Y,
-        xy.ADDRESS_STR,
-        xy.STREETNAME,
-        xy.TOWN_NAME,
-        xy.PCODE,
-        xy.UPRN,
-        ll.LLPG_LatLng_Lat,
-        ll.LLPG_LatLng_Lng,
         CASE
 			WHEN newREF = 0 THEN NULL 
             WHEN newREF <> 0 AND oldREF <> newREF THEN CONCAT('REF', newREF)
@@ -122,3 +103,4 @@ FROM (
         oldGW <> newGW
     )
 ) a
+ORDER BY GW
