@@ -1,13 +1,16 @@
 """
-main_postcodes.py
+main_postcodes_per_round.py
 Uses the classes and functions in getmaps.py and createprints.py to
-create a map for each postcode. Does not use an actual clustering
-algorithm unlike main_clusters.py
+create a map for each postcode on each round. Does not use an
+actual clustering algorithm unlike main_clusters.py
 """
 
+import os
+import glob
 from collections import defaultdict
 from typing import List, Tuple
 from colorsys import rgb_to_hls
+from PyPDF2 import PdfFileMerger, PdfFileReader
 from getmaps import Location
 import getmaps
 import createprints
@@ -83,6 +86,27 @@ def _group_locations_by_postcode(
     return postcode_list
 
 
+def _generate_colours(amount: int) -> List[List[Tuple[int]]]:
+    """
+    Creates a list of uniformly distributed RGBA colours. Colour values
+    in Python are between 0 and 1, but the values in the ArcGIS webmap JSON
+    are between 0 and 255.
+    Args:
+        amount (int): The amount of colours to generate
+    Returns:
+        List[List[Tuple[int]]]: A list of pairs of RGBA colours - the
+        first element in the pair is the fill colour, the second is the
+        outline colour
+    """
+    colours = []
+    fill = colourgen.get_rgb_fill(amount)
+    for i in range(amount):
+        line = (fill[i][0] - 45, fill[i][1] - 45, fill[i][2], 255)
+        colours.append([fill[i], line])
+    colours.sort(key=lambda x: rgb_to_hls(x[0][0], x[0][1], x[0][2]))
+    return colours
+
+
 def _get_rounds(config_path: str) -> List[str]:
     """
     Gets a list of the unique round type and number pairs that have been
@@ -108,7 +132,15 @@ def _get_rounds(config_path: str) -> List[str]:
     return list(set(rounds))
 
 
-def _assign_rounds_to_postcodes(postcode_objs: List[Postcode]):
+def _assign_rounds_to_postcodes(postcode_objs: List[Postcode]) -> List[Postcode]:
+    """
+    Fills in the rounds attribute of a Postcode object with the rounds
+    of the Location objects in its locations attribute
+    Args:
+        postcode_objs (List[Postcode]): The list of Postcode objects
+    Returns:
+        List[Postcode]: The list of Postcode objects, now with rounds attached
+    """
     for postcode_obj in postcode_objs:
         rounds = []
         for location in postcode_obj.locations:
@@ -119,28 +151,52 @@ def _assign_rounds_to_postcodes(postcode_objs: List[Postcode]):
     return postcode_objs
 
 
-def _generate_colours(amount: int) -> List[List[Tuple[int]]]:
+def _merge_pdfs(rounds: List[str]) -> None:
     """
-    Creates a list of uniformly distributed RGBA colours. Colour values
-    in Python are between 0 and 1, but the values in the ArcGIS webmap JSON
-    are between 0 and 255.
+    Creates a list of lists, where each sublist is a group of PDFs in the
+    same round. Merges the PDFs into one file in the same order as the
+    list
     Args:
-        amount (int): The amount of colours to generate
-    Returns:
-        List[List[Tuple[int]]]: A list of pairs of RGBA colours - the
-        first element in the pair is the fill colour, the second is the
-        outline colour
+        rounds (List[str]): The list of rounds
     """
-    colours = []
-    fill = colourgen.get_rgb_fill(amount)
-    for i in range(amount):
-        line = (fill[i][0] - 45, fill[i][1] - 45, fill[i][2], 255)
-        colours.append([fill[i], line])
-    colours.sort(key=lambda x: rgb_to_hls(x[0][0], x[0][1], x[0][2]))
-    return colours
+    round_pdfs = []
+    pdf_files = glob.glob('.\\img\\*.pdf')
+    for rnd in rounds:
+        round_pdf = [
+            f for f in pdf_files
+            if f'{rnd}-' in f
+            and 'overview' not in f]
+        if os.path.exists(f'.\\img\\{rnd}-overview.pdf'):
+            round_pdf[:0] = [f'.\\img\\{rnd}-overview.pdf']
+        round_pdfs.append(round_pdf)
+    # Flatten list
+    round_pdfs = [pdf for pdf_list in round_pdfs for pdf in pdf_list]
+    print(round_pdfs)
+    merger = PdfFileMerger()
+    for pdf in round_pdfs:
+        merger.append(PdfFileReader(pdf), 'rb')
+    with open('.\\test.pdf', 'wb') as pdf_out:
+        merger.write(pdf_out)
+    merger.close()
+
+
+def _cleanup_files() -> None:
+    """
+    Removes all the PDFs and images from the ./img folder except
+    the template image
+    """
+    # Gets a flat list of all PDF and JPG files
+    files = [
+        f for f_ in [
+            glob.glob(ext) for ext in ('.\\img\\*.jpg', '.\\img\\*.pdf')]
+        for f in f_]
+    files.remove('.\\img\\template.jpg')
+    for f in files:
+        os.remove(f)
 
 
 if __name__ == '__main__':
+
     locations = _get_all_locations('.\\.config')
     postcode_groups = _group_locations_by_postcode(locations)
     postcode_objs = []
@@ -155,58 +211,59 @@ if __name__ == '__main__':
             None))
     postcode_objs.sort(key=lambda x: (sum([float(i.lat) for i in x.locations]) / len(x.locations)) + sum([float(i.lng) for i in x.locations]) / len(x.locations))
     postcode_objs = _assign_rounds_to_postcodes(postcode_objs)
-    print(_get_rounds('.\\.config'))
-    for postcode_obj in postcode_objs:
-        postcode_obj.print_postcode()
-    print(type(postcode_objs))
-    """
-    # Creates an overview map out of all the postcodes
-    template = createprints.open_template()
-    template = createprints.write_text_on_template('RECY R34 Overview', template)
-    scales = [36000]
-    maps = [getmaps.get_clustered_map(
-        postcode_objs,
-        scales[0],
-        90,
-        15,
-        4663,
-        6214,
-        128,
-        'overview')]
-    map_image = createprints.open_maps('overview', scales)[0]
-    final_map = createprints.paste_single_map(template, map_image)
-    result = createprints.save_print('overview', final_map, 'pdf')
-    print(result)
-    for postcode_obj in postcode_objs:
+    rounds = _get_rounds('.\\.config')
+    for rnd in rounds:
+        rnd_postcodes = [p for p in postcode_objs if rnd in p.rounds]
+        # Creates an overview map out of all the postcodes in this round
         template = createprints.open_template()
-        scales = [1750, 10000]
-        maps = [
-            getmaps.get_clustered_map(
-                [postcode_obj],
-                scales[0],
-                20,
-                3,
-                4663,
-                3502,
-                600,
-                postcode_obj.postcode),
-            getmaps.get_clustered_map(
-                [postcode_obj],
-                scales[1],
-                10,
-                1.5,
-                4663,
-                2649,
-                1200,
-                postcode_obj.postcode)]
-        template = createprints.write_text_on_template(
-            f'{postcode_obj.locations[0].street}, ' \
-            f'{postcode_obj.locations[0].town}, ' \
-            f'{postcode_obj.postcode}, ' \
-            'RECY R34',
-            template)
-        map_images = createprints.open_maps(postcode_obj.postcode, scales)
-        pasted = createprints.paste_maps(template, map_images)
-        result = createprints.save_print(postcode_obj.postcode, pasted, 'pdf')
+        template = createprints.write_text_on_template(f'{rnd} Overview', template)
+        scales = [60000]
+        maps = [getmaps.get_clustered_map(
+            rnd_postcodes,
+            scales[0],
+            90,
+            15,
+            4663,
+            6214,
+            128,
+            'overview')]
+        map_image = createprints.open_maps('overview', scales)[0]
+        final_map = createprints.paste_single_map(template, map_image)
+        result = createprints.save_print(f'{rnd}-overview', final_map, 'pdf')
         print(result)
-    """
+        # Creates a map for each postcode in the round
+        for postcode_obj in rnd_postcodes:
+            template = createprints.open_template()
+            scales = [1750, 10000]
+            maps = [
+                getmaps.get_clustered_map(
+                    [postcode_obj],
+                    scales[0],
+                    20,
+                    3,
+                    4663,
+                    3502,
+                    600,
+                    postcode_obj.postcode),
+                getmaps.get_clustered_map(
+                    [postcode_obj],
+                    scales[1],
+                    10,
+                    1.5,
+                    4663,
+                    2649,
+                    1200,
+                    postcode_obj.postcode)]
+            template = createprints.write_text_on_template(
+                f'{rnd}, ' \
+                f'{postcode_obj.locations[0].street}, ' \
+                f'{postcode_obj.locations[0].town}, ' \
+                f'{postcode_obj.postcode}',
+                template)
+            map_images = createprints.open_maps(postcode_obj.postcode, scales)
+            pasted = createprints.paste_maps(template, map_images)
+            result = createprints.save_print(
+                f'{rnd}-{postcode_obj.postcode}', pasted, 'pdf')
+            print(result)
+    _merge_pdfs(rounds)
+    _cleanup_files()

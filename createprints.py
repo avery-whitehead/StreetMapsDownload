@@ -68,6 +68,7 @@ def paste_maps(template: Image, maps: List['Image']) -> Image:
     template.paste(maps[1], (148, 4217))
     return template
 
+
 def paste_single_map(template: Image, map_: Image) -> Image:
     """
     Overlays a single map image on to the template image

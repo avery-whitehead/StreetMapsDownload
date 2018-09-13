@@ -103,4 +103,3 @@ FROM (
         oldGW <> newGW
     )
 ) a
-ORDER BY GW

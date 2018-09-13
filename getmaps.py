@@ -7,7 +7,7 @@ either the ArcGIS or Mapbox REST APIs to return a static map image
 from typing import List, Tuple
 import json
 import sys
-from shapely.geometry import MultiPoint, Polygon
+from shapely.geometry import MultiPoint
 from latlon_to_bng import WGS84toOSGB36 as lat_long_to_x_y
 import requests
 import pyodbc
@@ -184,79 +184,6 @@ def get_all_locations(conn: pyodbc.Connection) -> List[Location]:
     return locations
 
 
-def get_arcgis_map(
-        location: Location,
-        scale: str,
-        x_size: int,
-        y_size: int,
-        dpi: int,
-        prefix: str) -> None:
-    """
-    Uses the Requests library and the ArcGIS API to download a static map
-    image of the location
-    Args:
-        location (Location): The location to get a map for
-        scale (str): The scale to display the map at (higher numbers are more
-        zoomed out)
-        x_size (int): The width of the output image (px)
-        y_size (int): The height of the output image (px)
-        dpi (int): The DPI of the output image (default is 96)
-        prefix(str): The filename prefix to save the file with
-    """
-    map_uri = 'https://ccvgisapp01:6443/arcgis/rest/services/Printing/' \
-        'HDCExportWebMap/GPServer/Export Web Map/execute'
-    headers = {'Content-Type': 'application/x-www-form-urlencoded'}
-    web_map = _get_json(location.x, location.y, scale, x_size, y_size, dpi)
-    payload = {
-        'Web_Map_as_JSON': web_map,
-        'Format': 'JPG',
-        'f': 'json',
-        'Layout_Template': 'MAP_ONLY'}
-    cafile = '.\\cacert.pem'
-    req = requests.post(map_uri, headers=headers, data=payload, verify=cafile)
-    if req.status_code == 200:
-        # Returns a JSON formatted bytes type
-        resp = req.content.decode('utf8')
-        img_url = json.loads(resp)['results'][0]['value']['url']
-        img_req = requests.get(img_url)
-        img_path = f'./img/{prefix}-{scale}.jpg'
-        with open(img_path, 'wb') as image_f:
-            image_f.write(img_req.content)
-
-
-def _get_json(
-        x: str,
-        y: str,
-        scale: str,
-        x_size: int,
-        y_size: int,
-        dpi: int) -> str:
-    """
-    Loads the JSON template from file, fills in the x and y values and
-    removes the whitespace so it can be passed as a parameter to the ArcGIS API
-    Args:
-        x (str): The x-coordinate of the location
-        y (str): The y-coordinate of the location
-        scale (str): The scale to display the map at (higher numbers are more
-        zoomed out)
-        x_size (int): The width of the output image (px)
-        y_size (int): The height of the output image (px)
-        dpi (int): The DPI of the output image (default is 96)
-    Returns:
-        string: The filled in and formatted JSON template as a string
-    """
-    with open('.\\web_map.json', 'r') as web_map_f:
-        web_map = json.load(web_map_f)
-    web_map['mapOptions']['extent']['xmin'] = x
-    web_map['mapOptions']['extent']['xmax'] = x
-    web_map['mapOptions']['extent']['ymin'] = y
-    web_map['mapOptions']['extent']['ymax'] = y
-    web_map['mapOptions']['scale'] = scale
-    web_map['exportOptions']['outputSize'] = [x_size, y_size]
-    web_map['exportOptions']['dpi'] = dpi
-    return str(web_map)
-
-
 def get_clustered_map(
         postcodes: List['Postcode'],
         scale: str,
@@ -292,6 +219,7 @@ def get_clustered_map(
         x_size,
         y_size,
         dpi)
+    print(web_map)
     payload = {
         'Web_Map_as_JSON': web_map,
         'Format': 'JPG',
@@ -303,6 +231,7 @@ def get_clustered_map(
         # Returns a JSON formatted bytes type
         resp = req.content.decode('utf8')
         img_url = json.loads(resp)['results'][0]['value']['url']
+        print(img_url)
         img_req = requests.get(img_url)
         img_path = f'./img/{prefix}-{scale}.jpg'
         with open(img_path, 'wb') as image_f:
@@ -365,16 +294,8 @@ def _get_centroid(postcodes: List['Postcode']) -> Tuple[float, float]:
     for postcode in postcodes:
         for location in postcode.locations:
             lat_long_list.append([float(location.lat), float(location.lng)])
-    # If there are less than three locations, the x and y need to be
-    # calculated and input manually        
-    if len(postcodes) < 3:
-        return(lat_long_list[0][0], lat_long_list[0][1])
-    elif len(postcodes) >= 3:
-        poly = Polygon(lat_long_list)
-        centroid_tuple = poly.centroid.coords[0]
-    else:
-        points = MultiPoint(lat_long_list)
-        centroid_tuple = list(points.centroid.coords)[0]
+    points = MultiPoint(lat_long_list)
+    centroid_tuple = list(points.centroid.coords)[0]
     return lat_long_to_x_y(centroid_tuple[0], centroid_tuple[1])
 
 
