@@ -11,6 +11,10 @@ GIS stuff, machine learning stuff and image processing stuff in one handy map-ma
 
 `main_clusters.py` - Uses DBSCAN to create clusters of locations and produces one map per cluster
 
+`main_postcodes_per_round.py` - Groups locations by postcodes and produces one map per postcode, but overview maps are created for each collection round instead. Also merges the created maps into a single document at the end
+
+The most up to date main file is `main_postcodes_per_round.py`
+
 ## Library files
 
 `colourgen.py` - Creates a list of n visually distinct colours used to label the markers on the map, used in all main files
@@ -32,6 +36,10 @@ GIS stuff, machine learning stuff and image processing stuff in one handy map-ma
 `get_location.sql` - Returns some geodetic info (WGS84 latitudes and longitudes, OSGB36 easting and northings) and some address data for a single location, used in `main.py`
 
 `get_all_locations.sql` - Returns the same geodetic and address info, but for an arbitrary number of locations, used in `main_postcodes.py` and `main_clusters.py`
+
+`get_all_locations_per_round.sql` - Returns the same information as get_all_locations, but includes the round information for each location, used in `main_postcodes_per_round.py`
+
+`get_rounds.sql` - Returns just the round information that `get_all_locations_per_round` also gets
 
 ## Example
 
